@@ -17,21 +17,21 @@ class VoiceCallManager {
                 { urls: 'stun:stun1.l.google.com:19302' },
                 // OpenRelay free TURN server (for NAT traversal)
                 {
-                    urls: 'turn:openrelay.metered.ca:80',
+                    urls: [
+                        'turn:openrelay.metered.ca:80',
+                        'turn:openrelay.metered.ca:80?transport=tcp',
+                        'turn:openrelay.metered.ca:443',
+                        'turn:openrelay.metered.ca:443?transport=tcp'
+                    ],
                     username: 'openrelayproject',
                     credential: 'openrelayproject'
                 },
+                // Backup TURN servers (Twilio's free STUN)
                 {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'stun:global.stun.twilio.com:3478'
                 }
-            ]
+            ],
+            iceCandidatePoolSize: 10
         };
         
         this.peerConnection = null;
@@ -256,19 +256,26 @@ class VoiceCallManager {
      */
     createPeerConnection() {
         console.log('🔗 Creating peer connection...');
+        console.log('📋 ICE Servers configuration:', JSON.stringify(this.configuration.iceServers, null, 2));
         
         this.peerConnection = new RTCPeerConnection(this.configuration);
         
         // Handle ICE candidates
         this.peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log('🧊 Sending ICE candidate');
+                const candidateType = event.candidate.candidate.includes('typ relay') ? 'TURN relay' :
+                                    event.candidate.candidate.includes('typ srflx') ? 'STUN reflexive' :
+                                    event.candidate.candidate.includes('typ host') ? 'Host' : 'Unknown';
+                console.log(`🧊 Sending ICE candidate [${candidateType}]: ${event.candidate.candidate}`);
+                
                 this.stompClient.send("/app/call/ice-candidate", {}, JSON.stringify({
                     callId: this.callId,
                     from: this.currentUsername,
                     to: this.remoteUsername,
                     candidate: event.candidate
                 }));
+            } else {
+                console.log('✅ ICE gathering complete');
             }
         };
         

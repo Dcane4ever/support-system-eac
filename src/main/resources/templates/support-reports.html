@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Classroom Support System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/support-reports.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="header-title">
+            <img th:src="@{/logo/EAC.png}" alt="EAC Logo" class="eac-logo">
+            <h1>Reports & Analytics</h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="/support/dashboard" class="nav-link">
+                <span class="material-icons">dashboard</span> Dashboard
+            </a>
+            <div class="user-info">
+                <span class="user-badge" th:text="${user.username}">User</span>
+                <a href="/logout" class="btn-primary">
+                    <span class="material-icons">logout</span> Sign Out
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- Enhanced controls section with advanced filtering -->
+        <div class="controls-section">
+            <div class="filter-group">
+                <label for="dateRange">Date Range:</label>
+                <select id="dateRange" class="filter-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div class="export-group">
+                <button id="exportBtn" class="btn-export">
+                    <span class="material-icons">download</span> Export Report
+                </button>
+                <button id="refreshBtn" class="btn-refresh">
+                    <span class="material-icons">refresh</span> Refresh Data
+                </button>
+                <button id="printBtn" class="btn-print">
+                    <span class="material-icons">print</span> Print
+                </button>
+            </div>
+        </div>
+
+        <!-- Analytics Overview -->
+        <div class="section-header">
+            <h2 class="section-title">Analytics Overview</h2>
+            <p class="section-subtitle">Monitor chat activities and user engagement</p>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="card">
+                <div class="card-icon">
+                    <span class="material-icons">chat</span>
+                </div>
+                <div class="card-label">Total Chats</div>
+                <div class="card-value" id="totalChats">0</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <span class="material-icons" style="color: #FFD700;">hourglass_top</span>
+                </div>
+                <div class="card-label">Active Chats</div>
+                <div class="card-value" id="activeChats">0</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <span class="material-icons" style="color: #27ae60;">check_circle</span>
+                </div>
+                <div class="card-label">Closed Chats</div>
+                <div class="card-value" id="closedChats">0</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <span class="material-icons student-icon">school</span>
+                </div>
+                <div class="card-label">Total Students</div>
+                <div class="card-value student-color" id="totalStudents">0</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <span class="material-icons teacher-icon">people</span>
+                </div>
+                <div class="card-label">Total Teachers</div>
+                <div class="card-value teacher-color" id="totalTeachers">0</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">
+                    <span class="material-icons" style="color: #cc0000;">schedule</span>
+                </div>
+                <div class="card-label">Avg Duration</div>
+                <div class="card-value" id="avgDuration" style="font-size: 20px;">0</div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2 class="section-title">Performance Metrics</h2>
+        </div>
+
+        <div class="metrics-cards">
+            <div class="metric-card large">
+                <div class="metric-header">
+                    <span class="material-icons">done_all</span>
+                    <span>Resolution Rate</span>
+                </div>
+                <div class="metric-large-value" id="resolutionRate">0%</div>
+                <div class="metric-detail" id="resolutionDetail">0 of 0 resolved</div>
+            </div>
+
+            <div class="metric-card large">
+                <div class="metric-header">
+                    <span class="material-icons">timer</span>
+                    <span>Avg Response Time</span>
+                </div>
+                <div class="metric-large-value" id="avgResponseTime">0 min</div>
+                <div class="metric-detail" id="responseDetail">Range: 0 - 0 min</div>
+            </div>
+
+            <div class="metric-card large">
+                <div class="metric-header">
+                    <span class="material-icons">star_rate</span>
+                    <span>Avg Customer Rating</span>
+                </div>
+                <div class="metric-large-value" id="avgCustomerRating">0 / 5</div>
+                <div class="metric-detail" id="ratingDetail">Based on latest ratings</div>
+            </div>
+
+            <div class="metric-card large">
+                <div class="metric-header">
+                    <span class="material-icons">people</span>
+                    <span>Customer Engagement</span>
+                </div>
+                <div class="metric-large-value" id="engagementRate">0%</div>
+                <div class="metric-detail" id="engagementDetail">Unique customers</div>
+            </div>
+        </div>
+        
+        <!-- Status Distribution -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2 class="section-title">Status Distribution</h2>
+        </div>
+
+        <div class="status-metrics">
+            <div class="metric-card waiting">
+                <div class="metric-icon">
+                    <span class="material-icons">schedule</span>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Waiting</div>
+                    <div class="metric-value" id="waitingCount">0</div>
+                    <div class="metric-percentage" id="waitingPercentage">0%</div>
+                </div>
+            </div>
+
+            <div class="metric-card active">
+                <div class="metric-icon">
+                    <span class="material-icons">play_circle</span>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Active</div>
+                    <div class="metric-value" id="activeCount">0</div>
+                    <div class="metric-percentage" id="activePercentage">0%</div>
+                </div>
+            </div>
+
+            <div class="metric-card closed">
+                <div class="metric-icon">
+                    <span class="material-icons">check_circle</span>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Closed</div>
+                    <div class="metric-value" id="closedCount">0</div>
+                    <div class="metric-percentage" id="closedPercentage">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2 class="section-title">Analytics Charts</h2>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-box">
+                <div class="chart-title">
+                    <span class="material-icons">bar_chart</span>
+                    Character Map: Student vs Teacher
+                </div>
+                <canvas id="characterMapChart"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color green"></div>
+                        <span>Students</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color blue"></div>
+                        <span>Teachers</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">
+                    <span class="material-icons">trending_up</span>
+                    Trend Market: Last 7 Days Activity
+                </div>
+                <canvas id="trendChart"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color green"></div>
+                        <span>Students</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color blue"></div>
+                        <span>Teachers</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Charts -->
+        <div class="charts-container">
+            <div class="chart-box">
+                <div class="chart-title">
+                    <span class="material-icons">access_time</span>
+                    Hourly Activity Distribution
+                </div>
+                <canvas id="hourlyChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">
+                    <span class="material-icons">star</span>
+                    User Ratings Distribution
+                </div>
+                <canvas id="ratingChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">
+                    <span class="material-icons">trending_up</span>
+                    Customer Satisfaction Trend (7 Days)
+                </div>
+                <canvas id="satisfactionChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">
+                    <span class="material-icons">category</span>
+                    Chat Topics Distribution
+                </div>
+                <canvas id="topicChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Peak Hours & Top Customers -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2 class="section-title">Operational Insights</h2>
+        </div>
+
+        <div class="insights-container">
+            <div class="insight-box">
+                <div class="insight-title">
+                    <span class="material-icons">schedule</span>
+                    Peak Hours
+                </div>
+                <div id="peakHoursList" class="peak-hours-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="insight-box">
+                <div class="insight-title">
+                    <span class="material-icons">people</span>
+                    Top Customers
+                </div>
+                <div id="topCustomersList" class="top-customers-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Performance Table -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2 class="section-title">Agent Performance</h2>
+        </div>
+
+        <div class="table-container">
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Agent Name</th>
+                        <th>Total Sessions</th>
+                        <th>Closed Sessions</th>
+                        <th>Avg Rating</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+                <tbody id="agentTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Session Details Table -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2 class="section-title">Recent Chat Sessions</h2>
+        </div>
+
+        <div class="table-container">
+            <table class="sessions-table">
+                <thead>
+                    <tr>
+                        <th>Session ID</th>
+                        <th>Customer</th>
+                        <th>Agent</th>
+                        <th>Status</th>
+                        <th>Started At</th>
+                        <th>Duration</th>
+                        <th>Topic</th>
+                        <th>Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="sessionsTableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #999;">Loading data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>© 2025 Emilio Aguinaldo College</strong></p>
+        <p>Classroom Support System | Powered by EAC IT Department</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <script>
+        let characterMapChart, trendChart, hourlyChart, ratingChart, satisfactionChart, topicChart;
+        
+        async function loadAllData() {
+            await Promise.all([
+                loadAnalyticsData(),
+                loadStatusDistribution(),
+                loadCharacterMapChart(),
+                loadTrendChart(),
+                loadHourlyChart(),
+                loadRatingChart(),
+                loadSatisfactionTrend(),
+                loadTopicDistribution(),
+                loadResponseTimeMetrics(),
+                loadResolutionMetrics(),
+                loadPeakHours(),
+                loadTopCustomers(),
+                loadAgentPerformance(),
+                loadSessionDetails()
+            ]);
+        }
+        
+        async function loadAnalyticsData() {
+            try {
+                const analyticsResponse = await fetch('/support/reports/api/analytics');
+                const analytics = await analyticsResponse.json();
+                
+                document.getElementById('totalChats').textContent = analytics.totalChats;
+                document.getElementById('activeChats').textContent = analytics.activeChats;
+                document.getElementById('closedChats').textContent = analytics.closedChats;
+                document.getElementById('totalStudents').textContent = analytics.totalStudents;
+                document.getElementById('totalTeachers').textContent = analytics.totalTeachers;
+                document.getElementById('avgDuration').textContent = analytics.avgDuration;
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        async function loadStatusDistribution() {
+            try {
+                const response = await fetch('/support/reports/api/status-distribution');
+                const data = await response.json();
+                
+                document.getElementById('waitingCount').textContent = data.waiting;
+                document.getElementById('waitingPercentage').textContent = data.waitingPercentage + '%';
+                document.getElementById('activeCount').textContent = data.active;
+                document.getElementById('activePercentage').textContent = data.activePercentage + '%';
+                document.getElementById('closedCount').textContent = data.closed;
+                document.getElementById('closedPercentage').textContent = data.closedPercentage + '%';
+            } catch (error) {
+                console.error('Error loading status distribution:', error);
+            }
+        }
+
+        async function loadResponseTimeMetrics() {
+            try {
+                const response = await fetch('/support/reports/api/response-time');
+                const data = await response.json();
+                
+                document.getElementById('avgResponseTime').textContent = data.avgResponseTime + ' min';
+                document.getElementById('responseDetail').textContent = 'Range: ' + data.minResponseTime + ' - ' + data.maxResponseTime + ' min';
+            } catch (error) {
+                console.error('Error loading response time:', error);
+            }
+        }
+
+        async function loadResolutionMetrics() {
+            try {
+                const response = await fetch('/support/reports/api/resolution-metrics');
+                const data = await response.json();
+                
+                document.getElementById('resolutionRate').textContent = data.resolutionRate + '%';
+                document.getElementById('resolutionDetail').textContent = data.resolvedSessions + ' of ' + data.totalSessions + ' resolved';
+            } catch (error) {
+                console.error('Error loading resolution metrics:', error);
+            }
+        }
+
+        async function loadSatisfactionTrend() {
+            try {
+                const response = await fetch('/support/reports/api/satisfaction-trend');
+                const satisfactionData = await response.json();
+                
+                const dates = satisfactionData.map(d => d.date);
+                const ratings = satisfactionData.map(d => parseFloat(d.avgRating));
+                
+                const ctx = document.getElementById('satisfactionChart').getContext('2d');
+                
+                if (satisfactionChart) {
+                    satisfactionChart.destroy();
+                }
+                
+                satisfactionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Avg Rating',
+                            data: ratings,
+                            borderColor: '#cc0000',
+                            backgroundColor: 'rgba(204, 0, 0, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#cc0000',
+                            pointBorderColor: '#990000',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 5,
+                                ticks: { stepSize: 1 }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading satisfaction trend:', error);
+            }
+        }
+
+        async function loadTopicDistribution() {
+            try {
+                const response = await fetch('/support/reports/api/topic-distribution');
+                const topicData = await response.json();
+                
+                const topics = topicData.map(d => d.topic);
+                const counts = topicData.map(d => d.count);
+                
+                const ctx = document.getElementById('topicChart').getContext('2d');
+                
+                if (topicChart) {
+                    topicChart.destroy();
+                }
+                
+                topicChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: topics,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: [
+                                '#cc0000',
+                                '#ffd700',
+                                '#2ecc71',
+                                '#3498db',
+                                '#9b59b6',
+                                '#e74c3c',
+                                '#1abc9c'
+                            ],
+                            borderColor: 'white',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading topic distribution:', error);
+            }
+        }
+
+        async function loadPeakHours() {
+            try {
+                const response = await fetch('/support/reports/api/peak-hours');
+                const peakData = await response.json();
+                
+                const peaksList = document.getElementById('peakHoursList');
+                const peakHours = peakData.filter(h => h.isPeakHour);
+                
+                if (peakHours.length === 0) {
+                    peaksList.innerHTML = '<div class="no-data">No peak hours identified</div>';
+                    return;
+                }
+                
+                peaksList.innerHTML = peakHours.map(hour => `
+                    <div class="peak-hour-item">
+                        <div class="hour-time">${hour.hour}</div>
+                        <div class="hour-sessions">${hour.sessions} sessions</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading peak hours:', error);
+            }
+        }
+
+        async function loadTopCustomers() {
+            try {
+                const response = await fetch('/support/reports/api/top-customers');
+                const customersData = await response.json();
+                
+                const topList = document.getElementById('topCustomersList');
+                
+                if (customersData.length === 0) {
+                    topList.innerHTML = '<div class="no-data">No customer data available</div>';
+                    return;
+                }
+                
+                topList.innerHTML = customersData.map(customer => `
+                    <div class="customer-item">
+                        <div class="customer-name">${customer.customerName}</div>
+                        <div class="customer-stats">${customer.sessionCount} chats</div>
+                        <div class="customer-rating">${customer.avgRating ? '⭐ ' + customer.avgRating : 'No rating'}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading top customers:', error);
+            }
+        }
+        
+        async function loadCharacterMapChart() {
+            try {
+                const response = await fetch('/support/reports/api/character-map');
+                const data = await response.json();
+                
+                const ctx = document.getElementById('characterMapChart').getContext('2d');
+                
+                if (characterMapChart) {
+                    characterMapChart.destroy();
+                }
+                
+                characterMapChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Students', 'Teachers'],
+                        datasets: [{
+                            label: 'Count',
+                            data: [data.students, data.teachers],
+                            backgroundColor: ['#2ecc71', '#3498db'],
+                            borderColor: ['#27ae60', '#2980b9'],
+                            borderWidth: 2,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading character map:', error);
+            }
+        }
+        
+        async function loadTrendChart() {
+            try {
+                const response = await fetch('/support/reports/api/trend-data');
+                const trendData = await response.json();
+                
+                const dates = trendData.map(d => d.date);
+                const studentData = trendData.map(d => d.students);
+                const teacherData = trendData.map(d => d.teachers);
+                
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                
+                if (trendChart) {
+                    trendChart.destroy();
+                }
+                
+                trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Students',
+                                data: studentData,
+                                borderColor: '#2ecc71',
+                                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#2ecc71',
+                                pointBorderColor: '#27ae60',
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            },
+                            {
+                                label: 'Teachers',
+                                data: teacherData,
+                                borderColor: '#3498db',
+                                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#3498db',
+                                pointBorderColor: '#2980b9',
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading trend chart:', error);
+            }
+        }
+
+        async function loadHourlyChart() {
+            try {
+                const response = await fetch('/support/reports/api/hourly-activity');
+                const hourlyData = await response.json();
+                
+                const hours = hourlyData.map(d => d.hour);
+                const counts = hourlyData.map(d => d.count);
+                
+                const ctx = document.getElementById('hourlyChart').getContext('2d');
+                
+                if (hourlyChart) {
+                    hourlyChart.destroy();
+                }
+                
+                hourlyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hours,
+                        datasets: [{
+                            label: 'Sessions',
+                            data: counts,
+                            backgroundColor: '#cc0000',
+                            borderColor: '#990000',
+                            borderWidth: 1,
+                            borderRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading hourly chart:', error);
+            }
+        }
+
+        async function loadRatingChart() {
+            try {
+                const response = await fetch('/support/reports/api/rating-distribution');
+                const ratingData = await response.json();
+                
+                const ctx = document.getElementById('ratingChart').getContext('2d');
+                
+                if (ratingChart) {
+                    ratingChart.destroy();
+                }
+                
+                ratingChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+                        datasets: [{
+                            label: 'Count',
+                            data: [
+                                ratingData.rating1,
+                                ratingData.rating2,
+                                ratingData.rating3,
+                                ratingData.rating4,
+                                ratingData.rating5
+                            ],
+                            backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#f39c12', '#2ecc71'],
+                            borderColor: ['#c0392b', '#d68910', '#f1c40f', '#d68910', '#27ae60'],
+                            borderWidth: 1,
+                            borderRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading rating chart:', error);
+            }
+        }
+
+        async function loadAgentPerformance() {
+            try {
+                const response = await fetch('/support/reports/api/agent-performance');
+                const agents = await response.json();
+                const tbody = document.getElementById('agentTableBody');
+                
+                if (agents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">No data available</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = agents.map(agent => `
+                    <tr>
+                        <td>${agent.agentName}</td>
+                        <td>${agent.totalSessions}</td>
+                        <td>${agent.closedSessions || 0}</td>
+                        <td>${agent.avgRating ? agent.avgRating + ' / 5' : 'N/A'}</td>
+                        <td>
+                            <div class="performance-bar">
+                                <div class="performance-fill" style="width: ${(agent.closedSessions / agent.totalSessions * 100) || 0}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading agent performance:', error);
+            }
+        }
+
+        async function loadSessionDetails() {
+            try {
+                const response = await fetch('/support/reports/api/session-details');
+                const sessions = await response.json();
+                const tbody = document.getElementById('sessionsTableBody');
+                
+                if (sessions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">No sessions available</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = sessions.slice(0, 20).map(session => `
+                    <tr>
+                        <td>#${session.id}</td>
+                        <td>${session.customer}</td>
+                        <td>${session.agent}</td>
+                        <td><span class="status-badge status-${session.status.toLowerCase()}">${session.status}</span></td>
+                        <td>${new Date(session.startedAt).toLocaleString()}</td>
+                        <td>${session.duration}</td>
+                        <td>${session.topic}</td>
+                        <td>${session.rating !== 'N/A' ? '⭐ ' + session.rating : 'N/A'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading session details:', error);
+            }
+        }
+
+        function exportReport() {
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += 'Classroom Support System Report\n';
+            csvContent += 'Generated: ' + new Date().toLocaleString() + '\n\n';
+            csvContent += 'Analytics Overview\n';
+            csvContent += 'Total Chats,' + document.getElementById('totalChats').textContent + '\n';
+            csvContent += 'Active Chats,' + document.getElementById('activeChats').textContent + '\n';
+            csvContent += 'Closed Chats,' + document.getElementById('closedChats').textContent + '\n';
+            csvContent += 'Total Students,' + document.getElementById('totalStudents').textContent + '\n';
+            csvContent += 'Total Teachers,' + document.getElementById('totalTeachers').textContent + '\n';
+            csvContent += 'Avg Duration,' + document.getElementById('avgDuration').textContent + '\n';
+            csvContent += 'Resolution Rate,' + document.getElementById('resolutionRate').textContent + '\n';
+            csvContent += 'Avg Response Time,' + document.getElementById('avgResponseTime').textContent + '\n';
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'support-report-' + new Date().getTime() + '.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listeners for controls
+        document.getElementById('exportBtn').addEventListener('click', exportReport);
+        document.getElementById('refreshBtn').addEventListener('click', loadAllData);
+        
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+
+        window.addEventListener('load', loadAllData);
+    </script>
+</body>
+</html>

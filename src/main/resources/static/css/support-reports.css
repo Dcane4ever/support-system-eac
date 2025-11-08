@@ -1,0 +1,859 @@
+/* Reports Page Styles - Matches Landing Page Design */
+:root {
+  --eac-red: #cc0000;
+  --eac-gold: #ffd700;
+  --eac-dark: #2c2c2c;
+  --student-green: #2ecc71;
+  --teacher-blue: #3498db;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Google Sans", Arial, sans-serif;
+  background-color: #f5f5f5;
+  line-height: 1.6;
+}
+
+/* Header - Matching Landing Page */
+.header {
+  background: var(--eac-red);
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.eac-logo {
+  height: 50px;
+  background: white;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-badge {
+  background: white;
+  color: var(--eac-red);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s;
+  font-family: "Google Sans", Arial, sans-serif;
+}
+
+.btn-primary:hover {
+  background-color: white;
+  color: var(--eac-red);
+  transform: scale(1.05);
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Section Headers */
+.section-header {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.section-subtitle {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* Analytics Cards */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid var(--eac-red);
+  transition: all 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  font-size: 48px;
+  color: var(--eac-red);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.card-icon .material-icons {
+  font-size: 48px;
+  color: var(--eac-red);
+}
+
+.card-icon .student-icon {
+  color: var(--student-green);
+}
+
+.card-icon .teacher-icon {
+  color: var(--teacher-blue);
+}
+
+.card-label {
+  color: #666;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.card-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.card-value.student-color {
+  color: var(--student-green);
+}
+
+.card-value.teacher-color {
+  color: var(--teacher-blue);
+}
+
+/* Charts Container */
+.charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chart-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.chart-box:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.chart-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-title .material-icons {
+  color: var(--eac-red);
+  font-size: 28px;
+}
+
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-color.green {
+  background: var(--student-green);
+}
+
+.legend-color.blue {
+  background: var(--teacher-blue);
+}
+
+/* Added controls section styling */
+.controls-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.filter-group,
+.export-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-family: "Google Sans", Arial, sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.filter-select:hover,
+.filter-select:focus {
+  border-color: var(--eac-red);
+  outline: none;
+}
+
+.btn-export,
+.btn-refresh {
+  background-color: var(--eac-red);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: "Google Sans", Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.btn-export:hover,
+.btn-refresh:hover {
+  background-color: #990000;
+  transform: scale(1.05);
+}
+
+.btn-export .material-icons,
+.btn-refresh .material-icons {
+  font-size: 20px;
+}
+
+/* Added status metrics styling */
+.status-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-left: 4px solid #ddd;
+  transition: all 0.3s;
+}
+
+.metric-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.metric-card.waiting {
+  border-left-color: #f39c12;
+}
+
+.metric-card.active {
+  border-left-color: #2ecc71;
+}
+
+.metric-card.closed {
+  border-left-color: #3498db;
+}
+
+.metric-icon {
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.metric-card.waiting .metric-icon {
+  color: #f39c12;
+}
+
+.metric-card.active .metric-icon {
+  color: #2ecc71;
+}
+
+.metric-card.closed .metric-icon {
+  color: #3498db;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-label {
+  color: #666;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.metric-percentage {
+  color: #999;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Added table styling */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.performance-table,
+.sessions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.performance-table thead,
+.sessions-table thead {
+  background: var(--eac-red);
+  color: white;
+  font-weight: 600;
+}
+
+.performance-table th,
+.sessions-table th {
+  padding: 1rem;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+.performance-table td,
+.sessions-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.performance-table tbody tr:hover,
+.sessions-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.performance-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.performance-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  transition: width 0.3s ease;
+}
+
+/* Added status badge styling */
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.status-waiting {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.status-active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.status-closed {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Added new metrics cards styling for large metric displays */
+.metrics-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card.large {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--eac-red);
+  transition: all 0.3s;
+}
+
+.metric-card.large:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.metric-header .material-icons {
+  color: var(--eac-red);
+  font-size: 24px;
+}
+
+.metric-large-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--eac-red);
+  margin-bottom: 0.5rem;
+}
+
+.metric-detail {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Added insights container for peak hours and top customers */
+.insights-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.insight-box {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.insight-box:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.insight-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.insight-title .material-icons {
+  color: var(--eac-red);
+  font-size: 24px;
+}
+
+.peak-hours-list,
+.top-customers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.peak-hour-item,
+.customer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 5px;
+  border-left: 3px solid var(--eac-red);
+}
+
+.hour-time {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.hour-sessions {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.customer-stats {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.customer-rating {
+  color: var(--eac-red);
+  font-weight: 500;
+}
+
+.loading,
+.no-data {
+  color: #999;
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.95rem;
+}
+
+/* Added button styling for print button */
+.btn-print {
+  background-color: var(--eac-red);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: "Google Sans", Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.btn-print:hover {
+  background-color: #990000;
+  transform: scale(1.05);
+}
+
+.btn-print .material-icons {
+  font-size: 20px;
+}
+
+@media print {
+  .header,
+  footer,
+  .controls-section,
+  .nav-menu,
+  .btn-export,
+  .btn-refresh,
+  .btn-print {
+    display: none;
+  }
+
+  body {
+    background: white;
+  }
+
+  .container {
+    padding: 0;
+  }
+}
+
+/* Footer - Matching Landing Page */
+footer {
+  background-color: var(--eac-dark);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  margin-top: 3rem;
+}
+
+footer p {
+  margin: 0.5rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .header-title {
+    width: 100%;
+  }
+
+  .nav-menu {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .controls-section {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .filter-group,
+  .export-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .analytics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .status-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 20px;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .card-value {
+    font-size: 2rem;
+  }
+
+  .legend {
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .performance-table,
+  .sessions-table {
+    font-size: 0.85rem;
+  }
+
+  .performance-table td,
+  .sessions-table td {
+    padding: 0.75rem;
+  }
+
+  .performance-table th,
+  .sessions-table th {
+    padding: 0.75rem;
+  }
+
+  .metric-card {
+    gap: 0.75rem;
+  }
+
+  .metric-icon {
+    font-size: 36px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 18px;
+  }
+
+  .header-title {
+    gap: 10px;
+  }
+
+  .eac-logo {
+    height: 40px;
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .controls-section {
+    flex-direction: column;
+  }
+
+  .filter-group,
+  .export-group {
+    width: 100%;
+  }
+
+  .filter-select,
+  .btn-export,
+  .btn-refresh {
+    width: 100%;
+  }
+
+  .performance-table,
+  .sessions-table {
+    font-size: 0.75rem;
+  }
+
+  .performance-table td,
+  .sessions-table td {
+    padding: 0.5rem;
+  }
+
+  .performance-table th,
+  .sessions-table th {
+    padding: 0.5rem;
+  }
+
+  .metric-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .metric-icon {
+    font-size: 32px;
+  }
+
+  .metric-value {
+    font-size: 1.25rem;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+}

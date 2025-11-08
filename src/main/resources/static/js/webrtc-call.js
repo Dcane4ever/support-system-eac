@@ -15,23 +15,33 @@ class VoiceCallManager {
                 // Google's free STUN servers
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                // OpenRelay free TURN server (for NAT traversal)
+                // Twilio STUN servers
+                { urls: 'stun:global.stun.twilio.com:3478' },
+                // Metered TURN servers (better reliability)
+                {
+                    urls: [
+                        'turn:a.relay.metered.ca:80',
+                        'turn:a.relay.metered.ca:80?transport=tcp',
+                        'turn:a.relay.metered.ca:443',
+                        'turn:a.relay.metered.ca:443?transport=tcp'
+                    ],
+                    username: 'e92f577c4bc6068b0f7b6ecb',
+                    credential: 'pxNqW1Ks1uW+iwmr'
+                },
+                // Backup TURN server (OpenRelay)
                 {
                     urls: [
                         'turn:openrelay.metered.ca:80',
-                        'turn:openrelay.metered.ca:80?transport=tcp',
-                        'turn:openrelay.metered.ca:443',
-                        'turn:openrelay.metered.ca:443?transport=tcp'
+                        'turn:openrelay.metered.ca:443'
                     ],
                     username: 'openrelayproject',
                     credential: 'openrelayproject'
-                },
-                // Backup TURN servers (Twilio's free STUN)
-                {
-                    urls: 'stun:global.stun.twilio.com:3478'
                 }
             ],
-            iceCandidatePoolSize: 10
+            iceCandidatePoolSize: 10,
+            iceTransportPolicy: 'all', // Use 'relay' to force TURN for testing
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require'
         };
         
         this.peerConnection = null;
@@ -279,6 +289,15 @@ class VoiceCallManager {
             }
         };
         
+        // Handle ICE gathering state changes
+        this.peerConnection.onicegatheringstatechange = () => {
+            console.log('📡 ICE gathering state:', this.peerConnection.iceGatheringState);
+            
+            if (this.peerConnection.iceGatheringState === 'complete') {
+                console.log('✅ All ICE candidates have been gathered');
+            }
+        };
+        
         // Handle incoming tracks (remote audio)
         this.peerConnection.ontrack = (event) => {
             console.log('🎵 Received remote track');
@@ -318,9 +337,19 @@ class VoiceCallManager {
         this.peerConnection.oniceconnectionstatechange = () => {
             console.log('🧊 ICE connection state:', this.peerConnection.iceConnectionState);
             
-            // Only end call if ICE completely failed after retries
-            if (this.peerConnection.iceConnectionState === 'failed') {
-                console.log('❌ ICE connection failed');
+            if (this.peerConnection.iceConnectionState === 'connected') {
+                console.log('✅ ICE connection established successfully');
+                // Log the selected candidate pair
+                this.logSelectedCandidatePair();
+            } else if (this.peerConnection.iceConnectionState === 'checking') {
+                console.log('🔍 ICE checking - trying to establish connection...');
+            } else if (this.peerConnection.iceConnectionState === 'disconnected') {
+                console.warn('⚠️ ICE disconnected - attempting to reconnect...');
+            } else if (this.peerConnection.iceConnectionState === 'failed') {
+                console.error('❌ ICE connection failed - no valid candidate pair found');
+                if (this.onError) {
+                    this.onError('Connection failed. Please check your network settings.');
+                }
                 this.endCall();
             }
         };
@@ -437,6 +466,49 @@ class VoiceCallManager {
             }
             
             this.pendingIceCandidates = [];
+        }
+    }
+    
+    /**
+     * Log the selected ICE candidate pair for debugging
+     */
+    async logSelectedCandidatePair() {
+        try {
+            const stats = await this.peerConnection.getStats();
+            stats.forEach(report => {
+                if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                    console.log('🎯 Selected candidate pair:', {
+                        localCandidateId: report.localCandidateId,
+                        remoteCandidateId: report.remoteCandidateId,
+                        state: report.state,
+                        nominated: report.nominated,
+                        bytesSent: report.bytesSent,
+                        bytesReceived: report.bytesReceived
+                    });
+                    
+                    // Get more details about local and remote candidates
+                    stats.forEach(candidateReport => {
+                        if (candidateReport.id === report.localCandidateId) {
+                            console.log('📍 Local candidate:', {
+                                type: candidateReport.candidateType,
+                                ip: candidateReport.address || candidateReport.ip,
+                                port: candidateReport.port,
+                                protocol: candidateReport.protocol
+                            });
+                        }
+                        if (candidateReport.id === report.remoteCandidateId) {
+                            console.log('📍 Remote candidate:', {
+                                type: candidateReport.candidateType,
+                                ip: candidateReport.address || candidateReport.ip,
+                                port: candidateReport.port,
+                                protocol: candidateReport.protocol
+                            });
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('❌ Error getting stats:', error);
         }
     }
     

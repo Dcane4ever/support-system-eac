@@ -291,6 +291,7 @@ public class ChatController {
         sessionInfo.put("customerId", session.getCustomer().getStudentId());
         if (session.getAgent() != null) {
             sessionInfo.put("agentName", session.getAgent().getFullName());
+            sessionInfo.put("agentUsername", session.getAgent().getUsername());
         }
         
         messagingTemplate.convertAndSendToUser(

@@ -472,9 +472,9 @@
             
             // Store agent username and initialize voice call
             if (online && name) {
-                // Extract username from display name (assuming format "Agent Name")
-                // In real scenario, you'd get this from the notification data
-                agentUsername = name.toLowerCase().replace(/\s+/g, '');
+                // Get the actual username from the notification data
+                agentUsername = data.agentUsername;
+                console.log('Agent username set to:', agentUsername);
                 initializeVoiceCall();
             }
         }

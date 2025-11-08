@@ -9,11 +9,28 @@ class VoiceCallManager {
         this.currentUsername = currentUsername;
         this.remoteUsername = remoteUsername;
         
-        // WebRTC configuration with free Google STUN server
+        // WebRTC configuration with STUN and TURN servers
         this.configuration = {
             iceServers: [
+                // Google's free STUN servers
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
+                // OpenRelay free TURN server (for NAT traversal)
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
             ]
         };
         

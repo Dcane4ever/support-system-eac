@@ -1,6 +1,8 @@
 # Voice Call Bug Fix Summary
 
-## Bug Description
+## Bug #1: Calls Not Reaching Agent (FIXED ✅)
+
+### Description
 Voice calls from students were not reaching agents in production (Render deployment).
 
 **Symptoms:**
@@ -9,8 +11,7 @@ Voice calls from students were not reaching agents in production (Render deploym
 - Server logs show call forwarded correctly
 - WebSocket messages sent but not received
 
-## Root Cause
-
+### Root Cause
 The student-chat.html was deriving the agent's username incorrectly:
 
 ```javascript
@@ -24,65 +25,120 @@ But the actual database username was different (e.g., `gab`), causing:
 - Agent subscribed to: `/user/gab/queue/call` ✅
 - **Mismatch = No call received!**
 
-## The Fix
+### The Fix
+Backend sends `agentUsername` in session info, frontend uses it correctly.
 
-### 1. Backend (ChatController.java)
-Added `agentUsername` to the session info payload:
+---
 
-```java
-if (session.getAgent() != null) {
-    sessionInfo.put("agentName", session.getAgent().getFullName());
-    sessionInfo.put("agentUsername", session.getAgent().getUsername()); // ← NEW
-}
-```
+## Bug #2: Call Button Disappeared (FIXED ✅)
 
-### 2. Frontend (student-chat.html)
-Use the actual username from the payload instead of deriving it:
+### Description
+After fixing Bug #1, the call button disappeared completely on student/teacher side.
+
+**Symptoms:**
+- Call button not visible even when agent is connected
+- Voice call functionality completely inaccessible
+
+### Root Cause
+The `updateAgentInfo()` function signature was changed but the parameter wasn't being passed correctly:
 
 ```javascript
-// ✅ CORRECT: Use actual username from server
-agentUsername = data.agentUsername;
-console.log('Agent username set to:', agentUsername);
+// Function definition had username parameter
+function updateAgentInfo(name, online, username) {
+    if (online && username) {  // ← Checking username
+        agentUsername = username;
+        initializeVoiceCall();
+    }
+}
+
+// But callers weren't passing it!
+updateAgentInfo(data.agentName, true);  // ← Missing 3rd parameter!
+// Result: agentUsername = undefined
+// Call button visibility: agentUsername ? 'inline-block' : 'none'
+// → 'none' because agentUsername is undefined
 ```
 
-## Testing
+### The Fix
 
-After deploying this fix to Render:
+1. **Updated function signature:**
+   ```javascript
+   function updateAgentInfo(name, online, username) {
+       if (online && username) {
+           agentUsername = username;
+           console.log('Agent username set to:', agentUsername);
+           initializeVoiceCall();
+       }
+   }
+   ```
 
-1. **Student** starts a chat with an **agent**
-2. **Student** clicks the voice call button
-3. **Agent** should now see the incoming call modal
-4. **Agent** can accept/reject the call
-5. WebRTC connection should establish
+2. **Updated all call sites to pass agentUsername:**
+   ```javascript
+   // In checkSessionStatus()
+   updateAgentInfo(data.agentName, true, data.agentUsername);
+   
+   // In AGENT_JOINED notification
+   updateAgentInfo(data.agentName, true, data.agentUsername);
+   
+   // In SESSION_INFO notification
+   updateAgentInfo(data.agentName, true, data.agentUsername);
+   ```
+
+3. **Applied to both files:**
+   - `student-chat.html`
+   - `teacher-chat.html`
+
+---
 
 ## Files Changed
 
+### Backend:
 - `src/main/java/com/cusservice/bsit/controller/ChatController.java`
+  - Added `agentUsername` to session info payload
+
+### Frontend:
 - `src/main/resources/templates/student-chat.html`
+  - Fixed `updateAgentInfo()` to accept username parameter
+  - Updated all call sites to pass `data.agentUsername`
+  
+- `src/main/resources/templates/teacher-chat.html`
+  - Same fixes as student-chat.html
+
+---
+
+## Testing
+
+After deploying these fixes to Render:
+
+1. **Student/Teacher** starts a chat with an **agent**
+2. **Agent** accepts the chat
+3. ✅ **Call button should now appear** on student/teacher side
+4. **Student/Teacher** clicks the voice call button
+5. ✅ **Agent** should see the incoming call modal
+6. **Agent** can accept/reject the call
+7. ✅ WebRTC connection should establish
+
+---
 
 ## Deployment
 
 ```bash
 git add -A
-git commit -m "Fix voice call routing - use actual agent username instead of derived name"
+git commit -m "Fix voice call routing and call button visibility"
 git push
 ```
 
-Render will auto-deploy the fix.
+Render will auto-deploy the fixes (~2-5 minutes).
+
+---
 
 ## Related Issues Fixed
 
 - ✅ Voice call routing to correct agent
-- ✅ WebSocket message delivery
+- ✅ WebSocket message delivery  
 - ✅ Username consistency across frontend/backend
-
-## Additional Improvements Made
-
-1. Added `APP_BASE_URL` environment variable for dynamic email links
-2. Fixed email verification URLs to use production domain
-3. Created SQL scripts for database management
-4. Added WebRTC production setup guide
+- ✅ Call button visibility on student/teacher side
+- ✅ Proper parameter passing in updateAgentInfo()
 
 ---
 
-**Status:** ✅ FIXED - Ready for production testing
+**Status:** ✅ BOTH BUGS FIXED - Ready for production testing

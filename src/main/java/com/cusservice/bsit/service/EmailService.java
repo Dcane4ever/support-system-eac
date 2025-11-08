@@ -25,6 +25,9 @@ public class EmailService {
     @Value("${sendgrid.from.name}")
     private String fromName;
 
+    @Value("${app.base.url:https://localhost:8443}")
+    private String baseUrl;
+
     public void sendVerificationEmail(User user) {
         Email from = new Email(fromEmail, fromName);
         String subject = "Verify Your Email - Classroom Support System";
@@ -32,7 +35,7 @@ public class EmailService {
         
         String textContent = "Hello " + user.getFullName() + ",\n\n" +
                 "Thank you for registering! Please click the link below to verify your email:\n\n" +
-                "https://localhost:8443/verify-email?token=" + user.getVerificationToken() + "\n\n" +
+                baseUrl + "/verify-email?token=" + user.getVerificationToken() + "\n\n" +
                 "This link will expire in 24 hours.\n\n" +
                 "Best regards,\n" +
                 "Classroom Support Team";
@@ -42,7 +45,7 @@ public class EmailService {
                 "<p>Hello " + user.getFullName() + ",</p>" +
                 "<p>Thank you for registering! Please click the button below to verify your email:</p>" +
                 "<p style='margin: 30px 0;'>" +
-                "<a href='https://localhost:8443/verify-email?token=" + user.getVerificationToken() + "' " +
+                "<a href='" + baseUrl + "/verify-email?token=" + user.getVerificationToken() + "' " +
                 "style='background-color: #4CAF50; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; display: inline-block;'>" +
                 "Verify Email</a></p>" +
                 "<p><small>This link will expire in 24 hours.</small></p>" +
@@ -66,7 +69,7 @@ public class EmailService {
                 "<p>Your account has been successfully verified! 🎉</p>" +
                 "<p>You can now log in and start using the platform.</p>" +
                 "<p style='margin: 30px 0;'>" +
-                "<a href='https://localhost:8443/login' " +
+                "<a href='" + baseUrl + "/login' " +
                 "style='background-color: #2196F3; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; display: inline-block;'>" +
                 "Login Now</a></p>" +
                 "<p>Best regards,<br>Classroom Support Team</p>" +

@@ -317,7 +317,7 @@
                         } else if (data.status === 'active') {
                             isInQueue = false;
                             showChatInterface();
-                            updateAgentInfo(data.agentName, true);
+                            updateAgentInfo(data.agentName, true, data.agentUsername);
                             loadChatHistory(currentSessionId);
                         }
                     } else {
@@ -370,7 +370,7 @@
                     isInQueue = false;
                     showChatInterface();
                     showSystemMessage('🎉 ' + data.agentName + ' has joined the chat!');
-                    updateAgentInfo(data.agentName, true);
+                    updateAgentInfo(data.agentName, true, data.agentUsername);
                     break;
                     
                 case 'SESSION_INFO':
@@ -378,7 +378,7 @@
                     if (data.status === 'active' && data.agentName) {
                         isInQueue = false;
                         showChatInterface();
-                        updateAgentInfo(data.agentName, true);
+                        updateAgentInfo(data.agentName, true, data.agentUsername);
                     }
                     break;
                     
@@ -457,7 +457,7 @@
         }
 
         // Update agent info in header
-        function updateAgentInfo(name, online) {
+        function updateAgentInfo(name, online, username) {
             const agentNameElement = document.getElementById('agentName');
             const agentStatus = document.getElementById('agentStatus');
             
@@ -471,9 +471,8 @@
             }
             
             // Store agent username and initialize voice call
-            if (online && name) {
-                // Get the actual username from the notification data
-                agentUsername = data.agentUsername;
+            if (online && username) {
+                agentUsername = username;
                 console.log('Agent username set to:', agentUsername);
                 initializeVoiceCall();
             }

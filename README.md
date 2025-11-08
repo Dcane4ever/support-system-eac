@@ -21,15 +21,43 @@ A comprehensive classroom support system with real-time chat, voice calling, and
 
 ## Environment Variables
 
-Set these environment variables in Render:
+### For Local Development:
+Set these in `.env` file:
+```
+SENDGRID_API_KEY=your_sendgrid_api_key
+DB_URL=jdbc:mysql://localhost:3306/classroom_support?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
+### For Render Production:
+Set these in Render dashboard:
 ```
 SENDGRID_API_KEY=your_sendgrid_api_key
 DB_URL=your_mysql_connection_string
 DB_USERNAME=your_db_username
 DB_PASSWORD=your_db_password
-SERVER_PORT=8443
+ADMIN_PASSWORD=your_secure_admin_password
 ```
+
+## MySQL Database Setup
+
+For production deployment, you need a cloud MySQL database. Options:
+
+1. **Aiven MySQL** (FREE tier available)
+   - Sign up: https://aiven.io/
+   - Create MySQL service (Free Startup-4 plan)
+   - Get connection string
+
+2. **PlanetScale** (FREE tier available)
+   - Sign up: https://planetscale.com/
+   - Create database
+   - Get connection string
+
+3. **Railway** (Free trial)
+   - Sign up: https://railway.app/
+   - Provision MySQL
+   - Get connection details
 
 ## Render Deployment
 

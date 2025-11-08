@@ -3,17 +3,25 @@ services:
     name: classroom-support-system
     env: java
     buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/customer-service-aims.jar
+    startCommand: java -Dspring.profiles.active=prod -jar target/customer-service-aims.jar
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
       - key: SENDGRID_API_KEY
         sync: false
+      - key: SENDGRID_FROM_EMAIL
+        value: carwashpimentel@gmail.com
+      - key: SENDGRID_FROM_NAME
+        value: Classroom Support System
       - key: DB_URL
         sync: false
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: SERVER_PORT
-        value: 8443
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx512m -Xms256m"

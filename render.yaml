@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: classroom-support-system
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/customer-service-aims.jar
+    envVars:
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: SERVER_PORT
+        value: 8443
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx512m -Xms256m"

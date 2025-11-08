@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Chat - EAC Classroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
+    <!-- WebSocket Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <!-- WebRTC Voice Call Module -->
+    <script th:src="@{/js/webrtc-call.js}"></script>
+</head>
+<body>
+    <!-- Hidden Audio Element for Remote Stream -->
+    <audio id="remoteAudio" autoplay></audio>
+    <div class="header">
+        <div class="header-left">
+            <a href="/support/dashboard" class="back-btn">
+                <span class="material-icons">arrow_back</span>
+            </a>
+            <h1>🎧 Active Support Sessions</h1>
+        </div>
+        <div class="nav-menu">
+            <span class="status-indicator">● Available</span>
+            <span th:text="${user.fullName}">Agent</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-sidebar">
+            <h3>
+                <span class="material-icons" style="font-size: 20px; vertical-align: middle;">people</span>
+                Waiting Queue
+                <span class="queue-count">0</span>
+            </h3>
+            <div class="queue-empty" id="queueEmpty">
+                <span class="material-icons">inbox</span>
+                <p>No active requests</p>
+                <small>Waiting for students to request support...</small>
+            </div>
+            <div class="sessions-list" id="sessionsList">
+                <!-- Active chat sessions will appear here -->
+            </div>
+        </div>
+        
+        <div class="chat-main">
+            <div class="chat-empty-state" id="emptyState">
+                <span class="material-icons">chat_bubble_outline</span>
+                <h2>No Chat Selected</h2>
+                <p>Select a chat from the queue or wait for new support requests</p>
+            </div>
+
+            <div class="chat-active" id="chatActive" style="display: none;">
+                <!-- Call Status Banner -->
+                <div id="callStatus" class="call-status" style="display: none;">
+                    <span class="material-icons call-status-icon">phone_in_talk</span>
+                    <span id="callStatusText">Calling...</span>
+                </div>
+                
+                <div class="chat-header">
+                    <div class="agent-info">
+                        <div class="material-icons agent-avatar">person</div>
+                        <div>
+                            <strong id="studentName">Student Name</strong>
+                            <span class="student-info" id="studentInfo">Student ID: N/A</span>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <!-- Call Controls (shown during active call) -->
+                        <div id="callControls" class="call-controls" style="display: none;">
+                            <span id="callDuration" class="call-duration">00:00</span>
+                            <button id="muteButton" onclick="toggleMute()" class="btn-mute" title="Mute">
+                                <span class="material-icons">mic</span>
+                            </button>
+                            <button onclick="endVoiceCall()" class="btn-hang-up" title="Hang Up">
+                                <span class="material-icons">call_end</span>
+                            </button>
+                        </div>
+                        <button class="btn-action" onclick="resolveChat()" title="Resolve & Close">
+                            <span class="material-icons">check_circle</span>
+                            Resolve
+                        </button>
+                        <button class="btn-action" onclick="transferChat()" title="Transfer to Another Agent">
+                            <span class="material-icons">swap_horiz</span>
+                            Transfer
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">
+                        <div class="message-content">
+                            <span class="material-icons">info</span>
+                            <p>Chat session started. Help the student with their inquiry.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <form onsubmit="sendMessage(event)" class="chat-input-form">
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                        <button type="button" class="btn-attach" onclick="document.getElementById('imageInput').click()" title="Attach Image">
+                            <span class="material-icons">attach_file</span>
+                        </button>
+                        <input 
+                            type="text" 
+                            id="messageInput" 
+                            placeholder="Type your response..." 
+                            autocomplete="off"
+                        />
+                        <button type="submit" class="btn-send">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </form>
+                    <div id="imagePreview" class="image-preview" style="display: none;">
+                        <img id="previewImg" src="" alt="Preview">
+                        <button type="button" class="btn-remove-image" onclick="removeImagePreview()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .status-indicator {
+            color: #4caf50;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .queue-count {
+            background: var(--eac-red);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .queue-empty {
+            padding: 3rem 2rem;
+            text-align: center;
+            color: #999;
+        }
+
+        .queue-empty .material-icons {
+            font-size: 64px;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        .queue-empty p {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .queue-empty small {
+            font-size: 13px;
+            color: #bbb;
+        }
+
+        .chat-empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        .chat-empty-state .material-icons {
+            font-size: 80px;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        .chat-empty-state h2 {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-active {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .student-info {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'Google Sans', Arial, sans-serif;
+            transition: all 0.3s;
+        }
+
+        .btn-action:hover {
+            background: #f5f5f5;
+            border-color: var(--eac-red);
+            color: var(--eac-red);
+        }
+
+        .btn-action .material-icons {
+            font-size: 18px;
+        }
+
+        .btn-attach {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 8px;
+        }
+
+        .btn-attach:hover {
+            background: #f5f5f5;
+            border-color: var(--eac-red);
+            color: var(--eac-red);
+        }
+
+        .btn-attach .material-icons {
+            font-size: 20px;
+        }
+
+        .image-preview {
+            position: relative;
+            padding: 10px;
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .btn-remove-image {
+            position: absolute;
+            top: 15px;
+            left: 145px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .btn-remove-image .material-icons {
+            font-size: 18px;
+        }
+
+        .message-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+
+        .message-image:hover {
+            opacity: 0.9;
+        }
+    </style>
+
+    <script th:inline="javascript">
+        const currentAgent = {
+            id: /*[[${user.id}]]*/ 0,
+            name: /*[[${user.fullName}]]*/ 'Agent',
+            username: /*[[${user.username}]]*/ 'agent'
+        };
+
+        // WebSocket connection
+        let socket = null;
+        let stompClient = null;
+        let currentSessionId = null;
+        let waitingStudents = [];
+        let isConnecting = false;
+        
+        // Voice call variables
+        let voiceCallManager = null;
+        let currentCallerUsername = null;
+        let currentCallId = null;
+        let isCallActive = false;
+
+        // Connect to WebSocket
+        function connect() {
+            if (isConnecting || (stompClient && stompClient.connected)) {
+                console.log('Already connected or connecting');
+                return;
+            }
+            
+            isConnecting = true;
+            console.log('Connecting to WebSocket...');
+            
+            socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                isConnecting = false;
+                
+                // Subscribe to queue updates (broadcast to all agents)
+                stompClient.subscribe('/topic/queue-updates', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('Queue update received:', data);
+                    handleQueueUpdate(data);
+                });
+                
+                // Subscribe to personal notifications
+                stompClient.subscribe('/user/queue/notifications', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('Notification received:', data);
+                    handleNotification(data);
+                });
+                
+                // Subscribe to chat messages
+                stompClient.subscribe('/user/queue/messages', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('Message received:', data);
+                    handleMessage(data);
+                });
+                
+                // Subscribe to call signaling
+                stompClient.subscribe('/user/queue/call', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('📞 Call signal received:', data);
+                    handleCallSignal(data);
+                });
+                
+                // Load current queue
+                loadQueue();
+                
+            }, function(error) {
+                console.error('WebSocket connection error:', error);
+                isConnecting = false;
+                setTimeout(connect, 5000);
+            });
+        }
+
+        // Load initial queue
+        function loadQueue() {
+            fetch('/api/chat/queue')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Queue loaded:', data);
+                    waitingStudents = data.waitingStudents || [];
+                    updateQueueUI();
+                })
+                .catch(error => {
+                    console.error('Error loading queue:', error);
+                });
+        }
+
+        // Handle queue updates
+        function handleQueueUpdate(data) {
+            switch(data.type) {
+                case 'NEW_STUDENT':
+                    // Add student to queue
+                    const student = {
+                        id: data.sessionId,
+                        customer: {
+                            fullName: data.studentName,
+                            studentId: data.studentId
+                        },
+                        startedAt: new Date().toISOString()
+                    };
+                    waitingStudents.push(student);
+                    updateQueueUI();
+                    showNotification('New student in queue: ' + data.studentName);
+                    break;
+                    
+                case 'STUDENT_ASSIGNED':
+                    // Remove student from queue
+                    waitingStudents = waitingStudents.filter(s => s.id !== data.sessionId);
+                    updateQueueUI();
+                    break;
+                    
+                case 'QUEUE_UPDATE':
+                    // Refresh queue
+                    loadQueue();
+                    break;
+            }
+        }
+
+        // Handle personal notifications
+        function handleNotification(data) {
+            console.log('===== NOTIFICATION RECEIVED =====');
+            console.log('Type:', data.type);
+            console.log('Full data:', data);
+            console.log('================================');
+            
+            switch(data.type) {
+                case 'SESSION_INFO':
+                    console.log('SESSION_INFO received - Status:', data.status);
+                    if (data.status === 'active') {
+                        currentSessionId = data.sessionId;
+                        console.log('Setting current session ID:', currentSessionId);
+                        console.log('Customer Name:', data.customerName);
+                        console.log('Customer ID:', data.customerId);
+                        showChatInterface(data.customerName, data.customerId);
+                        loadChatHistory(data.sessionId);
+                    }
+                    break;
+                    
+                case 'SESSION_ENDED':
+                    if (data.sessionId === currentSessionId) {
+                        showSystemMessage('Chat session has been closed.');
+                        setTimeout(() => {
+                            hideChatInterface();
+                        }, 2000);
+                    }
+                    break;
+                    
+                default:
+                    console.log('Unknown notification type:', data.type);
+            }
+        }
+
+        // Handle incoming messages
+        function handleMessage(data) {
+            if (data.sessionId !== currentSessionId) {
+                console.log('Message for different session, ignoring');
+                return;
+            }
+            
+            const isOwn = data.senderUsername === currentAgent.username;
+            if (!isOwn) {
+                // Check if it's an image message
+                if (data.content && data.content.startsWith('data:image/')) {
+                    addImageToUI(data.content, 'received', data.senderName, data.timestamp);
+                } else {
+                    addMessageToUI(data.content, 'received', data.senderName, data.timestamp);
+                }
+                
+                // Play notification sound (optional)
+                // new Audio('/sounds/notification.mp3').play();
+            }
+        }
+
+        // Update queue UI
+        function updateQueueUI() {
+            const sessionsList = document.getElementById('sessionsList');
+            const queueEmpty = document.getElementById('queueEmpty');
+            const queueCount = document.querySelector('.queue-count');
+            
+            queueCount.textContent = waitingStudents.length;
+            
+            if (waitingStudents.length === 0) {
+                queueEmpty.style.display = 'block';
+                sessionsList.innerHTML = '';
+            } else {
+                queueEmpty.style.display = 'none';
+                sessionsList.innerHTML = waitingStudents.map(student => `
+                    <div class="session-item" onclick="acceptStudent(${student.id})">
+                        <div class="session-info">
+                            <strong>${escapeHtml(student.customer.fullName)}</strong>
+                            <span class="student-info">ID: ${escapeHtml(student.customer.studentId || 'N/A')}</span>
+                            <span class="session-time">Waiting ${getWaitTime(student.startedAt)}</span>
+                        </div>
+                        <button class="btn-accept" onclick="acceptStudent(${student.id}); event.stopPropagation();">
+                            <span class="material-icons">check_circle</span>
+                            Accept
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Accept student from queue
+        function acceptStudent(sessionId) {
+            console.log('Accepting student, session ID:', sessionId);
+            
+            if (currentSessionId) {
+                if (!confirm('You already have an active chat. Accept this new chat and close the current one?')) {
+                    return;
+                }
+            }
+            
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/chat/accept', {}, JSON.stringify({
+                    agentUsername: currentAgent.username,
+                    sessionId: sessionId
+                }));
+            } else {
+                alert('Connection lost. Reconnecting...');
+                connect();
+            }
+        }
+
+        // Show chat interface
+        function showChatInterface(studentName, studentId) {
+            console.log('===== SHOWING CHAT INTERFACE =====');
+            console.log('Student Name:', studentName);
+            console.log('Student ID:', studentId);
+            
+            const emptyState = document.getElementById('emptyState');
+            const chatActive = document.getElementById('chatActive');
+            
+            console.log('Empty State Element:', emptyState);
+            console.log('Chat Active Element:', chatActive);
+            
+            if (emptyState) emptyState.style.display = 'none';
+            if (chatActive) chatActive.style.display = 'flex';
+            
+            const studentNameEl = document.getElementById('studentName');
+            const studentInfoEl = document.getElementById('studentInfo');
+            
+            if (studentNameEl) studentNameEl.textContent = studentName;
+            if (studentInfoEl) studentInfoEl.textContent = 'Student ID: ' + (studentId || 'N/A');
+            
+            // Clear messages
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.innerHTML = `
+                    <div class="message system">
+                        <div class="message-content">
+                            <span class="material-icons">info</span>
+                            <p>Chat session started with ${escapeHtml(studentName)}.</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            console.log('Chat interface should now be visible');
+            console.log('==================================');
+        }
+
+        // Hide chat interface
+        function hideChatInterface() {
+            document.getElementById('chatActive').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'flex';
+            currentSessionId = null;
+        }
+
+        // Load chat history
+        function loadChatHistory(sessionId) {
+            fetch(`/api/chat/session/${sessionId}/messages`)
+                .then(response => response.json())
+                .then(messages => {
+                    const messagesDiv = document.getElementById('chatMessages');
+                    messagesDiv.innerHTML = '';
+                    messages.forEach(msg => {
+                        const isOwn = msg.sender.username === currentAgent.username;
+                        const msgType = isOwn ? 'sent' : 'received';
+                        
+                        // Check if it's an image message
+                        if (msg.content && msg.content.startsWith('data:image/')) {
+                            addImageToUI(msg.content, msgType, msg.sender.fullName, msg.sentAt);
+                        } else {
+                            addMessageToUI(msg.content, msgType, msg.sender.fullName, msg.sentAt);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading chat history:', error);
+                });
+        }
+
+        // Send message
+        function sendMessage(event) {
+            event.preventDefault();
+            
+            if (!currentSessionId) {
+                alert('No active chat session.');
+                return;
+            }
+
+            // Check if there's an image to send
+            if (selectedImage) {
+                sendImageMessage();
+                return;
+            }
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            console.log('Sending message:', message);
+            
+            // Add message to UI immediately
+            addMessageToUI(message, 'sent', currentAgent.name);
+            
+            // Send via WebSocket
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/chat/message', {}, JSON.stringify({
+                    sessionId: currentSessionId,
+                    senderUsername: currentAgent.username,
+                    content: message
+                }));
+            } else {
+                showSystemMessage('Connection lost. Reconnecting...');
+                connect();
+            }
+            
+            // Clear input
+            input.value = '';
+        }
+
+        // Resolve chat
+        function resolveChat() {
+            if (!currentSessionId) {
+                alert('No active chat session.');
+                return;
+            }
+            
+            if (!confirm('Mark this chat as resolved and close the session?')) {
+                return;
+            }
+            
+            console.log('Resolving chat session:', currentSessionId);
+            
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/chat/end', {}, JSON.stringify({
+                    sessionId: currentSessionId,
+                    username: currentAgent.username
+                }));
+            } else {
+                alert('Connection lost. Reconnecting...');
+                connect();
+            }
+        }
+
+        // Transfer chat (placeholder)
+        function transferChat() {
+            alert('Transfer functionality coming soon!');
+        }
+
+        // Add message to UI
+        function addMessageToUI(text, type, sender, timestamp) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : getCurrentTime();
+            
+            if (type === 'sent') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <p>${escapeHtml(text)}</p>
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <span class="material-icons">person</span>
+                    </div>
+                    <div class="message-content">
+                        <strong>${escapeHtml(sender)}</strong>
+                        <p>${escapeHtml(text)}</p>
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Show system message
+        function showSystemMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <span class="material-icons">info</span>
+                    <p>${escapeHtml(text)}</p>
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Show browser notification
+        function showNotification(message) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('EAC Classroom Support', {
+                    body: message,
+                    icon: '/logo/EAC.png'
+                });
+            }
+        }
+
+        // Request notification permission
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        // Get wait time
+        function getWaitTime(startedAt) {
+            const start = new Date(startedAt);
+            const now = new Date();
+            const diff = Math.floor((now - start) / 1000); // seconds
+            
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm';
+            return Math.floor(diff / 3600) + 'h ' + Math.floor((diff % 3600) / 60) + 'm';
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Image handling
+        let selectedImage = null;
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB.');
+                return;
+            }
+
+            selectedImage = file;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImagePreview() {
+            selectedImage = null;
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('imageInput').value = '';
+        }
+
+        function sendImageMessage() {
+            if (!selectedImage || !currentSessionId) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+
+                // Add image to UI immediately
+                addImageToUI(base64Image, 'sent', currentAgent.name);
+
+                // Send via WebSocket
+                if (stompClient && stompClient.connected) {
+                    stompClient.send('/app/chat/message', {}, JSON.stringify({
+                        sessionId: currentSessionId,
+                        senderUsername: currentAgent.username,
+                        content: base64Image,
+                        type: 'IMAGE'
+                    }));
+                }
+
+                // Clear image preview
+                removeImagePreview();
+            };
+            reader.readAsDataURL(selectedImage);
+        }
+
+        function addImageToUI(imageSrc, type, sender, timestamp) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : getCurrentTime();
+
+            if (type === 'sent') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <img src="${imageSrc}" class="message-image" onclick="window.open('${imageSrc}', '_blank')" alt="Sent image">
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <span class="material-icons">person</span>
+                    </div>
+                    <div class="message-content">
+                        <strong>${escapeHtml(sender)}</strong>
+                        <img src="${imageSrc}" class="message-image" onclick="window.open('${imageSrc}', '_blank')" alt="Received image">
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Check for active sessions on page load
+        function checkActiveSession() {
+            fetch('/api/chat/status')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Agent status:', data);
+                    if (data.activeSessions && data.activeSessions > 0) {
+                        // Agent has active session, need to load it
+                        // For now, we'll fetch the agent's active sessions
+                        fetch('/api/chat/agent/sessions')
+                            .then(response => response.json())
+                            .then(sessions => {
+                                if (sessions && sessions.length > 0) {
+                                    // Load the first active session
+                                    const session = sessions[0];
+                                    currentSessionId = session.id;
+                                    showChatInterface(session.customer.fullName, session.customer.studentId);
+                                    loadChatHistory(session.id);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error loading active sessions:', error);
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking agent status:', error);
+                });
+        }
+
+        // ============================================
+        // VOICE CALL FUNCTIONS
+        // ============================================
+        
+        function initializeVoiceCall() {
+            if (!voiceCallManager && currentCallerUsername) {
+                console.log('🎤 Initializing voice call manager for agent');
+                voiceCallManager = new VoiceCallManager(
+                    stompClient,
+                    currentAgent.username,
+                    currentCallerUsername
+                );
+                
+                // Setup callbacks
+                voiceCallManager.onCallStateChange = function(state) {
+                    console.log('📞 Call state changed:', state);
+                    updateCallUI(state);
+                };
+                
+                voiceCallManager.onCallDuration = function(seconds) {
+                    const minutes = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    document.getElementById('callDuration').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+                
+                voiceCallManager.onError = function(message) {
+                    console.error('❌ Voice call error:', message);
+                    showSystemMessage('Call error: ' + message);
+                    resetCallUI();
+                };
+            }
+        }
+        
+        function acceptIncomingCall() {
+            if (!currentCallId || !currentCallerUsername) {
+                console.error('❌ Cannot accept call: missing call ID or caller username');
+                return;
+            }
+            
+            console.log('✅ Accepting incoming call from:', currentCallerUsername);
+            
+            // Hide incoming call modal
+            document.getElementById('incomingCallModal').style.display = 'none';
+            
+            // Initialize voice call manager with caller info
+            if (!voiceCallManager) {
+                voiceCallManager = new VoiceCallManager(
+                    stompClient,
+                    currentAgent.username,
+                    currentCallerUsername
+                );
+                
+                // Setup callbacks
+                voiceCallManager.onCallStateChange = function(state) {
+                    console.log('📞 Call state changed:', state);
+                    updateCallUI(state);
+                };
+                
+                voiceCallManager.onCallDuration = function(seconds) {
+                    const minutes = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    document.getElementById('callDuration').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+                
+                voiceCallManager.onError = function(message) {
+                    console.error('❌ Voice call error:', message);
+                    showSystemMessage('Call error: ' + message);
+                    resetCallUI();
+                };
+            }
+            
+            // Accept the call
+            voiceCallManager.acceptCall(currentCallId)
+                .then((success) => {
+                    if (success) {
+                        console.log('✅ Call accepted successfully');
+                        isCallActive = true;
+                        updateCallUI('connecting');
+                        showSystemMessage('Voice call connecting with ' + currentCallerUsername);
+                    } else {
+                        console.error('❌ Failed to accept call');
+                        showSystemMessage('Failed to accept call');
+                        resetCallUI();
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error accepting call:', error);
+                    showSystemMessage('Failed to accept call: ' + error);
+                    resetCallUI();
+                });
+        }
+        
+        function rejectIncomingCall() {
+            if (!currentCallId) {
+                console.error('Cannot reject call: call ID missing');
+                return;
+            }
+            
+            // Hide incoming call modal
+            document.getElementById('incomingCallModal').style.display = 'none';
+            
+            // Send reject signal
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/call/reject', {}, JSON.stringify({
+                    callId: currentCallId,
+                    from: currentAgent.username,
+                    to: currentCallerUsername
+                }));
+            }
+            
+            showSystemMessage('Call rejected');
+            currentCallId = null;
+            currentCallerUsername = null;
+        }
+        
+        function endVoiceCall() {
+            if (!voiceCallManager || !isCallActive) {
+                console.log('No active call to end');
+                return;
+            }
+            
+            try {
+                voiceCallManager.endCall();
+                console.log('Call ended successfully');
+                isCallActive = false;
+                resetCallUI();
+                showSystemMessage('Voice call ended');
+            } catch (error) {
+                console.error('Error ending call:', error);
+                resetCallUI();
+            }
+        }
+        
+        function toggleMute() {
+            if (!voiceCallManager || !isCallActive) {
+                return;
+            }
+            
+            const isMuted = voiceCallManager.toggleMute();
+            const muteButton = document.getElementById('muteButton');
+            const muteIcon = muteButton.querySelector('.material-icons');
+            
+            if (isMuted) {
+                muteIcon.textContent = 'mic_off';
+                muteButton.classList.add('muted');
+                muteButton.title = 'Unmute';
+            } else {
+                muteIcon.textContent = 'mic';
+                muteButton.classList.remove('muted');
+                muteButton.title = 'Mute';
+            }
+        }
+        
+        function updateCallUI(state) {
+            const callStatus = document.getElementById('callStatus');
+            const callStatusText = document.getElementById('callStatusText');
+            const callControls = document.getElementById('callControls');
+            
+            switch(state) {
+                case 'calling':
+                    callStatus.style.display = 'flex';
+                    callStatusText.textContent = 'Incoming call...';
+                    break;
+                case 'connecting':
+                    callStatus.style.display = 'flex';
+                    callStatusText.textContent = 'Connecting...';
+                    callControls.style.display = 'none';
+                    break;
+                case 'connected':
+                    callStatus.style.display = 'none';
+                    callControls.style.display = 'flex';
+                    isCallActive = true;
+                    break;
+                case 'ended':
+                case 'rejected':
+                    resetCallUI();
+                    break;
+            }
+        }
+        
+        function resetCallUI() {
+            document.getElementById('callStatus').style.display = 'none';
+            document.getElementById('callControls').style.display = 'none';
+            document.getElementById('callDuration').textContent = '00:00';
+            
+            const muteButton = document.getElementById('muteButton');
+            const muteIcon = muteButton.querySelector('.material-icons');
+            muteIcon.textContent = 'mic';
+            muteButton.classList.remove('muted');
+            
+            isCallActive = false;
+            currentCallId = null;
+            currentCallerUsername = null;
+        }
+        
+        function handleCallSignal(data) {
+            console.log('Call signal received:', data);
+            
+            switch(data.type) {
+                case 'CALL_REQUEST':
+                    // Show incoming call modal
+                    currentCallId = data.callId;
+                    currentCallerUsername = data.from;
+                    
+                    document.getElementById('callerName').textContent = 'Incoming Call from ' + data.from;
+                    document.getElementById('callerInfo').textContent = data.from + ' is calling...';
+                    document.getElementById('incomingCallModal').style.display = 'flex';
+                    
+                    // Initialize voice call manager if not already done
+                    initializeVoiceCall();
+                    
+                    showSystemMessage(data.from + ' is calling you...');
+                    break;
+                    
+                case 'CALL_END':
+                    if (isCallActive) {
+                        endVoiceCall();
+                        showSystemMessage('Call ended by ' + data.from);
+                    }
+                    break;
+                    
+                case 'WEBRTC_OFFER':
+                    console.log('🎯 Received WebRTC offer from:', data.from);
+                    if (voiceCallManager) {
+                        voiceCallManager.handleOffer(data.sdp);
+                    } else {
+                        console.warn('⚠️ VoiceCallManager not initialized, cannot handle offer');
+                    }
+                    break;
+                    
+                case 'WEBRTC_ANSWER':
+                    console.log('🎯 Received WebRTC answer from:', data.from);
+                    if (voiceCallManager) {
+                        voiceCallManager.handleAnswer(data.sdp);
+                    } else {
+                        console.warn('⚠️ VoiceCallManager not initialized, cannot handle answer');
+                    }
+                    break;
+                    
+                case 'ICE_CANDIDATE':
+                    if (voiceCallManager) {
+                        voiceCallManager.handleICECandidate(data.candidate);
+                    }
+                    break;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Support chat initialized for agent:', currentAgent.name);
+            requestNotificationPermission();
+            connect();
+            
+            // Check for active sessions after connecting
+            setTimeout(checkActiveSession, 1000);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (voiceCallManager && isCallActive) {
+                voiceCallManager.cleanup();
+            }
+            if (stompClient && stompClient.connected) {
+                stompClient.disconnect();
+            }
+        });
+    </script>
+    
+    <!-- Incoming Call Modal -->
+    <div id="incomingCallModal" class="incoming-call-modal" style="display: none;">
+        <div class="incoming-call-content">
+            <span class="material-icons incoming-call-icon">phone_in_talk</span>
+            <h3 id="callerName">Incoming Call</h3>
+            <p id="callerInfo">Student is calling...</p>
+            <div class="incoming-call-actions">
+                <button onclick="acceptIncomingCall()" class="btn-accept-call">
+                    <span class="material-icons">call</span>
+                </button>
+                <button onclick="rejectIncomingCall()" class="btn-reject-call">
+                    <span class="material-icons">call_end</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

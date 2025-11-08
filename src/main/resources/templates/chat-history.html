@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History - EAC Classroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left" style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/support/dashboard" class="back-btn" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.3s; text-decoration: none;">
+                <span class="material-icons">arrow_back</span>
+            </a>
+            <h1>📜 Chat History</h1>
+        </div>
+        <div class="nav-menu">
+            <span th:text="${user.fullName}">Agent</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container" style="max-width: 1400px;">
+        
+        <!-- Search and Filters Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2 style="margin-bottom: 1.5rem; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-icons">filter_alt</span>
+                Search & Filters
+            </h2>
+            
+            <div style="margin-bottom: 1rem;">
+                <div style="position: relative;">
+                    <span class="material-icons" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #999;">search</span>
+                    <input type="text" id="searchInput" placeholder="Search by customer name, agent name, or topic..." 
+                           style="width: 100%; padding: 0.75rem 1rem 0.75rem 3rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: 'Google Sans', sans-serif;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label for="statusFilter" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #555;">Status:</label>
+                    <select id="statusFilter" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: 'Google Sans', sans-serif; background: white;">
+                        <option value="">All Status</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="RESOLVED">Resolved</option>
+                        <option value="CLOSED">Closed</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="dateFrom" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #555;">From:</label>
+                    <input type="date" id="dateFrom" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: 'Google Sans', sans-serif;">
+                </div>
+                
+                <div>
+                    <label for="dateTo" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #555;">To:</label>
+                    <input type="date" id="dateTo" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: 'Google Sans', sans-serif;">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="applyFilters()" style="flex: 1; padding: 0.75rem 1.5rem; background: #cc0000; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.3s;">
+                    <span class="material-icons">filter_alt</span>
+                    Apply Filters
+                </button>
+                
+                <button onclick="clearFilters()" style="flex: 1; padding: 0.75rem 1.5rem; background: white; color: #cc0000; border: 2px solid #cc0000; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s;">
+                    <span class="material-icons">clear</span>
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        <!-- History Table Card -->
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-icons">history</span>
+                Chat Sessions
+            </h2>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f5f5f5; text-align: left;">
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Session ID</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Customer</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Agent</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Topic</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Started</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Ended</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Duration</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Status</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #555; border-bottom: 2px solid #ddd;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="9" style="padding: 2rem; text-align: center; color: #999;">Loading chat history...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Detail Modal -->
+    <div id="chatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="padding: 1.5rem 2rem; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; background: #cc0000; color: white;">
+                <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-icons">chat</span>
+                    Chat Details
+                </h2>
+                <button onclick="closeModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.3s;">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            
+            <div style="padding: 2rem; overflow-y: auto;">
+                <div style="background: #f5f5f5; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <p style="margin: 0.5rem 0;"><strong>Session ID:</strong> <span id="modalSessionId"></span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Customer:</strong> <span id="modalStudent"></span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Agent:</strong> <span id="modalAgent"></span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Topic:</strong> <span id="modalTopic"></span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Started:</strong> <span id="modalStarted"></span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Ended:</strong> <span id="modalEnded"></span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span id="modalStatus"></span></p>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-icons">forum</span>
+                    Conversation
+                </h3>
+                <div id="modalMessages" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background: #fafafa;">
+                    <p style="text-align: center; color: #999;">Loading messages...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Minimal additional styles for table and modal */
+        tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+        
+        tbody td {
+            padding: 1rem;
+            color: #555;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .status-active {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-resolved {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .status-closed {
+            background: #f5f5f5;
+            color: #757575;
+        }
+        
+        .btn-view {
+            padding: 0.5rem 1rem;
+            background: #cc0000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: background 0.3s;
+        }
+        
+        .btn-view:hover {
+            background: #a00000;
+        }
+        
+        .message-item {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #cc0000;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            color: #cc0000;
+        }
+        
+        .message-content {
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .message-image {
+            max-width: 100%;
+            margin-top: 0.5rem;
+            border-radius: 8px;
+        }
+    </style>
+
+    <script th:inline="javascript">
+        // Store user info
+        const currentUser = {
+            id: /*[[${user.id}]]*/ 0,
+            name: /*[[${user.fullName}]]*/ 'Agent',
+            username: /*[[${user.username}]]*/ 'agent'
+        };
+
+        let allHistory = [];
+
+        // Load chat history on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChatHistory();
+        });
+
+        function loadChatHistory() {
+            fetch('/api/chat/history/all')
+                .then(response => response.json())
+                .then(data => {
+                    allHistory = data;
+                    displayHistory(data);
+                })
+                .catch(error => {
+                    console.error('Error loading chat history:', error);
+                    document.getElementById('historyTableBody').innerHTML = 
+                        '<tr><td colspan="9" class="no-data">Error loading chat history</td></tr>';
+                });
+        }
+
+        function displayHistory(sessions) {
+            const tbody = document.getElementById('historyTableBody');
+            
+            if (sessions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="no-data">No chat history found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sessions.map(session => {
+                const startedDate = new Date(session.startedAt);
+                const endedDate = session.endedAt ? new Date(session.endedAt) : null;
+                const duration = endedDate ? calculateDuration(startedDate, endedDate) : 'Ongoing';
+                
+                const statusClass = 'status-' + session.status.toLowerCase();
+                
+                return `
+                    <tr>
+                        <td>#${session.id}</td>
+                        <td>${session.customer.fullName}</td>
+                        <td>${session.agent ? session.agent.fullName : 'Unassigned'}</td>
+                        <td>${session.topic || 'General Support'}</td>
+                        <td>${formatDateTime(startedDate)}</td>
+                        <td>${endedDate ? formatDateTime(endedDate) : '-'}</td>
+                        <td>${duration}</td>
+                        <td><span class="status-badge ${statusClass}">${session.status}</span></td>
+                        <td>
+                            <button class="btn-view" onclick="viewChatDetails(${session.id})">
+                                <span class="material-icons" style="font-size: 16px;">visibility</span>
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function applyFilters() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const startDate = document.getElementById('dateFrom').value;
+            const endDate = document.getElementById('dateTo').value;
+
+            let filtered = allHistory.filter(session => {
+                // Filter by search text (customer name, agent name, or topic)
+                if (searchText) {
+                    const customerMatch = session.customer.fullName.toLowerCase().includes(searchText);
+                    const agentMatch = session.agent && session.agent.fullName.toLowerCase().includes(searchText);
+                    const topicMatch = session.topic && session.topic.toLowerCase().includes(searchText);
+                    
+                    if (!customerMatch && !agentMatch && !topicMatch) {
+                        return false;
+                    }
+                }
+                
+                // Filter by status
+                if (status && session.status !== status) {
+                    return false;
+                }
+                
+                // Filter by date range
+                const sessionDate = new Date(session.startedAt);
+                if (startDate) {
+                    const start = new Date(startDate);
+                    if (sessionDate < start) {
+                        return false;
+                    }
+                }
+                
+                if (endDate) {
+                    const end = new Date(endDate);
+                    end.setHours(23, 59, 59);
+                    if (sessionDate > end) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+
+            displayHistory(filtered);
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            displayHistory(allHistory);
+        }
+
+        function viewChatDetails(sessionId) {
+            const session = allHistory.find(s => s.id === sessionId);
+            if (!session) return;
+
+            // Populate modal with session details
+            document.getElementById('modalSessionId').textContent = '#' + session.id;
+            document.getElementById('modalStudent').textContent = session.customer.fullName;
+            document.getElementById('modalAgent').textContent = session.agent ? session.agent.fullName : 'Unassigned';
+            document.getElementById('modalTopic').textContent = session.topic || 'General Support';
+            document.getElementById('modalStarted').textContent = formatDateTime(new Date(session.startedAt));
+            document.getElementById('modalEnded').textContent = session.endedAt ? formatDateTime(new Date(session.endedAt)) : 'Ongoing';
+            
+            const statusBadge = document.getElementById('modalStatus');
+            statusBadge.textContent = session.status;
+            statusBadge.className = 'status-badge status-' + session.status.toLowerCase();
+
+            // Load messages
+            document.getElementById('modalMessages').innerHTML = '<p class="loading-message">Loading messages...</p>';
+            
+            fetch(`/api/chat/session/${sessionId}/messages`)
+                .then(response => response.json())
+                .then(messages => {
+                    displayMessages(messages);
+                })
+                .catch(error => {
+                    console.error('Error loading messages:', error);
+                    document.getElementById('modalMessages').innerHTML = 
+                        '<p class="no-data">Error loading messages</p>';
+                });
+
+            // Show modal
+            document.getElementById('chatModal').style.display = 'flex';
+        }
+
+        function displayMessages(messages) {
+            const container = document.getElementById('modalMessages');
+            
+            if (messages.length === 0) {
+                container.innerHTML = '<p class="no-data">No messages in this conversation</p>';
+                return;
+            }
+
+            container.innerHTML = messages.map(msg => {
+                const time = formatDateTime(new Date(msg.sentAt));
+                const isSystem = msg.type === 'SYSTEM';
+                const isImage = msg.type === 'IMAGE';
+                
+                if (isSystem) {
+                    return `
+                        <div class="message-item message-system">
+                            <div class="message-header">
+                                <span>${time}</span>
+                            </div>
+                            <div class="message-content">${msg.content}</div>
+                        </div>
+                    `;
+                }
+                
+                if (isImage) {
+                    return `
+                        <div class="message-item">
+                            <div class="message-header">
+                                <span class="message-sender">${msg.sender.fullName}</span>
+                                <span>${time}</span>
+                            </div>
+                            <div class="message-content">
+                                <img src="${msg.content}" class="message-image" 
+                                     onclick="window.open('${msg.content}', '_blank')" 
+                                     alt="Shared image" />
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="message-item">
+                        <div class="message-header">
+                            <span class="message-sender">${msg.sender.fullName}</span>
+                            <span>${time}</span>
+                        </div>
+                        <div class="message-content">${msg.content}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function closeModal() {
+            document.getElementById('chatModal').style.display = 'none';
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function calculateDuration(start, end) {
+            const diff = end - start;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes % 60}m`;
+            }
+            return `${minutes}m`;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('chatModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

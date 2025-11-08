@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAC Customer Service Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-title">
+            <img src="https://www.eac.edu.ph/wp-content/uploads/2020/07/EAC-Logo.png" alt="EAC Logo" class="eac-logo">
+            <h1>EAC Customer Service </h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="#"><span class="material-icons">home</span> Home</a>
+            <a href="#"><span class="material-icons">help</span> FAQs</a>
+            <a href="#"><span class="material-icons">contact_support</span> Support</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <section class="services">
+            <h2>How Can We Help You?</h2>
+            <div class="service-grid">
+                <div class="service-card">
+                    <span class="material-icons" style="color: var(--eac-blue); font-size: 32px;">school</span>
+                    <h3>Academic Services</h3>
+                    <p>Enrollment assistance, grade inquiries, academic documents, and student records.</p>
+                </div>
+                <div class="service-card">
+                    <span class="material-icons" style="color: var(--eac-blue); font-size: 32px;">computer</span>
+                    <h3>Technical Support</h3>
+                    <p>Online learning platform support, student portal assistance, and IT services.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="contact-form">
+            <h2>Submit a Request</h2>
+            <form>
+                <div class="form-group">
+                    <label for="studentId">Student ID Number</label>
+                    <input type="text" id="studentId" required placeholder="Enter your student ID">
+                </div>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label for="email">EAC Email Address</label>
+                    <input type="email" id="email" required placeholder="username@eac.edu.ph">
+                </div>
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <select id="department" required class="form-group input">
+                        <option value="">Select Department</option>
+                        <option value="registrar">Registrar</option>
+                        <option value="finance">Finance</option>
+                        <option value="academics">Academics</option>
+                        <option value="it">IT Support</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="message">How can we assist you?</label>
+                    <textarea id="message" rows="5" required placeholder="Please describe your concern..."></textarea>
+                </div>
+                <button type="submit" class="btn">Submit Request</button>
+            </form>
+        </section>
+
+        <section class="faqs">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <details>
+                        <summary>How do I request for my academic documents?</summary>
+                        <p>Visit the Registrar's Office or submit a request through this portal. Processing time is typically 3-5 working days. Make sure to include your student ID and valid ID when making requests.</p>
+                    </details>
+                </div>
+                <div class="faq-item">
+                    <details>
+                        <summary>What are the payment methods available?</summary>
+                        <p>EAC accepts payments through bank transfer, online banking, credit/debit cards, and over-the-counter payments at our cashier's office. For specific payment instructions, please contact our Finance Department.</p>
+                    </details>
+                </div>
+                <div class="faq-item">
+                    <details>
+                        <summary>How do I reset my student portal password?</summary>
+                        <p>Click on the "Forgot Password" link on the student portal login page or contact our IT Support desk for immediate assistance.</p>
+                    </details>
+                </div>
+                <div class="faq-item">
+                    <details>
+                        <summary>What are the enrollment procedures?</summary>
+                        <p>Enrollment procedures include assessment of previous semester grades, payment of fees, and subject registration. Visit our Registrar's Office or check the student portal for the complete enrollment guide.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="chat-widget">
+        <button class="chat-button">
+            <span class="material-icons">chat</span>
+            Chat with Us
+        </button>
+    </div>
+
+    <footer>
+        <p>© 2025 Emilio Aguinaldo College • Customer Service Portal</p>
+        <p>1113 San Marcelino St., Paco, Manila, Philippines</p>
+    </footer>
+<script src="script.js"></script>
+    
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - EAC Classroom Support</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/register.css}">
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo-section">
+            <img th:src="@{/logo/EAC.png}" alt="EAC Logo" class="eac-logo">
+            <h1>Create Account</h1>
+            <p class="subtitle">Join EAC Classroom Support System</p>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-error">
+            <span class="material-icons">error</span>
+            <span th:text="${error}"></span>
+        </div>
+        
+        <form th:action="@{/register}" method="post">
+            <div class="form-group">
+                <label for="role">
+                    <span class="material-icons" style="font-size: 18px; vertical-align: middle;">badge</span>
+                    I am a <span class="required">*</span>
+                </label>
+                <select id="role" name="role" required onchange="toggleStudentId()">
+                    <option value="">Select your role</option>
+                    <option value="STUDENT">Student</option>
+                    <option value="TEACHER">Teacher</option>
+                    <option value="SUPPORT_AGENT">Support Agent</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="fullName">
+                    <span class="material-icons" style="font-size: 18px; vertical-align: middle;">person</span>
+                    Full Name <span class="required">*</span>
+                </label>
+                <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+            </div>
+            
+            <div class="form-group" id="studentIdGroup">
+                <label for="studentId">
+                    <span class="material-icons" style="font-size: 18px; vertical-align: middle;">badge</span>
+                    Student ID
+                </label>
+                <input type="text" id="studentId" name="studentId" placeholder="Enter your student ID (e.g., 2021-12345)">
+                <p class="help-text">Required for students</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">
+                    <span class="material-icons" style="font-size: 18px; vertical-align: middle;">account_circle</span>
+                    Username <span class="required">*</span>
+                </label>
+                <input type="text" id="username" name="username" required placeholder="Choose a username">
+                <p class="help-text">This will be used to log in</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">
+                    <span class="material-icons" style="font-size: 18px; vertical-align: middle;">email</span>
+                    Email Address <span class="required">*</span>
+                </label>
+                <input type="email" id="email" name="email" required placeholder="your.email@eac.edu.ph">
+                <p class="help-text">We'll send a verification email to this address</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <span class="material-icons" style="font-size: 18px; vertical-align: middle;">lock</span>
+                    Password <span class="required">*</span>
+                </label>
+                <input type="password" id="password" name="password" required placeholder="Create a strong password" minlength="6">
+                <p class="help-text">Minimum 6 characters</p>
+            </div>
+            
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+        
+        <div class="divider">
+            <span>Already have an account?</span>
+        </div>
+        
+        <div class="links-section">
+            <a href="/login">Sign In</a>
+        </div>
+        
+        <a href="/" class="back-link">
+            <span class="material-icons">arrow_back</span>
+            <span>Back to Home</span>
+        </a>
+    </div>
+    
+    <script>
+        function toggleStudentId() {
+            const role = document.getElementById('role').value;
+            const studentIdGroup = document.getElementById('studentIdGroup');
+            const studentIdInput = document.getElementById('studentId');
+            
+            if (role === 'STUDENT') {
+                studentIdGroup.style.display = 'block';
+                studentIdInput.required = true;
+            } else {
+                studentIdGroup.style.display = 'none';
+                studentIdInput.required = false;
+                studentIdInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
+

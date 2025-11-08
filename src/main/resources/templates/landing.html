@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EAC Classroom Support System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/landing.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="header-title">
+            <img th:src="@{/logo/EAC.png}" alt="EAC Logo" class="eac-logo">
+            <h1>EAC Classroom Support System</h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="#features"><span class="material-icons">school</span> Features</a>
+            <a href="#support"><span class="material-icons">contact_support</span> Support</a>
+            
+            <div th:if="${isLoggedIn}">
+                <span class="user-badge" th:text="${username}">User</span>
+                <a href="/dashboard" class="btn-primary">Dashboard</a>
+            </div>
+            <div th:unless="${isLoggedIn}">
+                <a href="/login" class="btn-primary">
+                    <span class="material-icons">login</span> Sign In
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h2>Welcome to EAC Classroom</h2>
+        <p>Your all-in-one platform for learning, collaboration, and support</p>
+        <div class="hero-buttons">
+            <a href="/register" class="btn-large btn-white">Get Started</a>
+            <a href="#features" class="btn-large btn-outline">Learn More</a>
+        </div>
+    </section>
+
+    <div class="container">
+        <h2 class="section-title" id="features">Platform Features</h2>
+        <div class="features">
+            <div class="feature-card">
+                <div class="material-icons feature-icon">school</div>
+                <h3>Virtual Classrooms</h3>
+                <p>Create and manage virtual classrooms with ease. Share assignments, materials, and announcements with your students.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="material-icons feature-icon">chat</div>
+                <h3>Real-time Support Chat</h3>
+                <p>Get instant help from support agents. Chat with teachers or get technical assistance whenever you need it.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="material-icons feature-icon">assignment</div>
+                <h3>Assignment Management</h3>
+                <p>Submit and grade assignments digitally. Track progress and provide feedback efficiently.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="material-icons feature-icon">people</div>
+                <h3>Collaboration Tools</h3>
+                <p>Work together with classmates and teachers. Share ideas, discuss topics, and learn together.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="material-icons feature-icon">notifications</div>
+                <h3>Smart Notifications</h3>
+                <p>Stay updated with important announcements, deadlines, and messages through email notifications.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="material-icons feature-icon">security</div>
+                <h3>Secure Platform</h3>
+                <p>Your data is protected with enterprise-grade security. Email verification and secure authentication.</p>
+            </div>
+        </div>
+
+        <div class="support-section" id="support">
+            <h2 class="section-title">Need Help?</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+                Our support team is here to assist you with any questions or concerns
+            </p>
+            
+            <div class="support-options">
+                <div class="support-card">
+                    <div class="material-icons">chat_bubble</div>
+                    <h3>Live Chat</h3>
+                    <p>Connect with our support agents in real-time</p>
+                    <a href="/chat/anonymous" class="btn-primary" style="margin-top: 1rem; display: inline-block;">Start Chat</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="material-icons">email</div>
+                    <h3>Email Support</h3>
+                    <p>Send us your questions and get detailed responses</p>
+                    <a href="mailto:support@eac.edu.ph" class="btn-primary" style="margin-top: 1rem; display: inline-block;">Send Email</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="material-icons">help</div>
+                    <h3>FAQ & Guides</h3>
+                    <p>Find answers to common questions</p>
+                    <a href="/faq" class="btn-primary" style="margin-top: 1rem; display: inline-block;">View FAQs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-widget">
+        <a href="/chat/anonymous" style="text-decoration: none;">
+            <button class="chat-button">
+                <span class="material-icons">chat</span>
+                Chat with Support
+            </button>
+        </a>
+    </div>
+
+    <footer>
+        <p><strong>© 2025 Emilio Aguinaldo College</strong></p>
+        <p>1113 San Marcelino St., Paco, Manila, Philippines</p>
+        <p>Classroom Support System | Powered by EAC IT Department</p>
+    </footer>
+</body>
+</html>

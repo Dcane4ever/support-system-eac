@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Chat - EAC Classroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
+    <!-- WebSocket Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <!-- WebRTC Voice Call Module -->
+    <script th:src="@{/js/webrtc-call.js}"></script>
+</head>
+<body>
+    <!-- Hidden Audio Element for Remote Stream -->
+    <audio id="remoteAudio" autoplay></audio>
+    
+    <div class="header">
+        <div class="header-left">
+            <a href="/student/dashboard" class="back-btn">
+                <span class="material-icons">arrow_back</span>
+            </a>
+            <h1>💬 Support Chat</h1>
+        </div>
+        <div class="nav-menu">
+            <span th:text="${user.fullName}">Student</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <!-- Waiting Room (shown when in queue) -->
+        <div id="waitingRoom" class="waiting-room">
+            <div class="waiting-content">
+                <span class="material-icons waiting-icon">hourglass_empty</span>
+                <h2>Waiting for Support Agent</h2>
+                <p class="queue-position">You are position <span id="queuePosition">-</span> in the queue</p>
+                <p class="queue-info">Total in queue: <span id="queueSize">-</span></p>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <p class="waiting-message">Please wait while we connect you with an available agent...</p>
+                <button onclick="cancelQueue()" class="btn-cancel">Cancel and Return to Dashboard</button>
+            </div>
+        </div>
+        
+        <!-- Chat Interface (shown when agent connects) -->
+        <div id="chatInterface" class="chat-main" style="display: none;">
+            <div class="chat-header">
+                <div class="agent-info">
+                    <div class="material-icons agent-avatar">support_agent</div>
+                    <div>
+                        <strong id="agentName">Support Team</strong>
+                        <span class="status" id="agentStatus">● Connecting...</span>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <!-- Voice Call Button -->
+                    <button id="callButton" onclick="initiateVoiceCall()" class="btn-call" title="Start Voice Call" style="display: none;">
+                        <span class="material-icons">phone</span>
+                    </button>
+                    <!-- Call Controls (shown during call) -->
+                    <div id="callControls" class="call-controls" style="display: none;">
+                        <span id="callDuration" class="call-duration">00:00</span>
+                        <button id="muteButton" onclick="toggleMute()" class="btn-mute" title="Mute">
+                            <span class="material-icons">mic</span>
+                        </button>
+                        <button onclick="endVoiceCall()" class="btn-hang-up" title="Hang Up">
+                            <span class="material-icons">call_end</span>
+                        </button>
+                    </div>
+                    <button onclick="endChatSession()" class="btn-end-chat" title="End Chat">
+                        <span class="material-icons">close</span>
+                        End Chat
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Call Status Indicator -->
+            <div id="callStatus" class="call-status" style="display: none;">
+                <span class="material-icons call-status-icon">phone_in_talk</span>
+                <span id="callStatusText">Calling...</span>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    <div class="message-content">
+                        <span class="material-icons">info</span>
+                        <p>Welcome to EAC Classroom Support! How can we help you today?</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <form onsubmit="sendMessage(event)" class="chat-input-form">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                    <button type="button" class="btn-attach" onclick="document.getElementById('imageInput').click()" title="Attach Image">
+                        <span class="material-icons">attach_file</span>
+                    </button>
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Type your message..." 
+                        autocomplete="off"
+                    />
+                    <button type="submit" class="btn-send">
+                        <span class="material-icons">send</span>
+                    </button>
+                </form>
+                <div id="imagePreview" class="image-preview" style="display: none;">
+                    <img id="previewImg" src="" alt="Preview">
+                    <button type="button" class="btn-remove-image" onclick="removeImagePreview()">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Ended State -->
+        <div id="chatEnded" class="chat-ended" style="display: none;">
+            <span class="material-icons ended-icon">check_circle</span>
+            <h2>Chat Session Ended</h2>
+            <p>Thank you for contacting EAC Classroom Support!</p>
+            <div class="ended-actions">
+                <a href="/student/dashboard" class="btn-primary">Return to Dashboard</a>
+                <button onclick="startNewChat()" class="btn-secondary">Start New Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .btn-attach {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 8px;
+        }
+
+        .btn-attach:hover {
+            background: #f5f5f5;
+            border-color: var(--eac-red);
+            color: var(--eac-red);
+        }
+
+        .btn-attach .material-icons {
+            font-size: 20px;
+        }
+
+        .image-preview {
+            position: relative;
+            padding: 10px;
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .btn-remove-image {
+            position: absolute;
+            top: 15px;
+            left: 145px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .btn-remove-image .material-icons {
+            font-size: 18px;
+        }
+
+        .message-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+
+        .message-image:hover {
+            opacity: 0.9;
+        }
+
+        .btn-end-chat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'Google Sans', Arial, sans-serif;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-end-chat:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .btn-end-chat .material-icons {
+            font-size: 18px;
+        }
+    </style>
+
+    <script th:inline="javascript">
+        // Store user info
+        const currentUser = {
+            id: /*[[${user.id}]]*/ 0,
+            name: /*[[${user.fullName}]]*/ 'User',
+            username: /*[[${user.username}]]*/ 'user'
+        };
+
+        // WebSocket connection
+        let socket = null;
+        let stompClient = null;
+        let currentSessionId = null;
+        let isConnecting = false;
+        let isInQueue = false;
+        
+        // Voice call variables
+        let voiceCallManager = null;
+        let agentUsername = null;
+        let isCallActive = false;
+
+        // Connect to WebSocket
+        function connect() {
+            if (isConnecting || (stompClient && stompClient.connected)) {
+                console.log('Already connected or connecting');
+                return;
+            }
+            
+            isConnecting = true;
+            console.log('Connecting to WebSocket...');
+            
+            socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                isConnecting = false;
+                
+                // Subscribe to personal notifications
+                stompClient.subscribe('/user/queue/notifications', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('Notification received:', data);
+                    handleNotification(data);
+                });
+                
+                // Subscribe to chat messages
+                stompClient.subscribe('/user/queue/messages', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('Message received:', data);
+                    handleMessage(data);
+                });
+                
+                // Subscribe to call signaling
+                stompClient.subscribe('/user/queue/call', function(message) {
+                    const data = JSON.parse(message.body);
+                    console.log('📞 Call signal received:', data);
+                    handleCallSignal(data);
+                });
+                
+                // Check for existing session
+                checkExistingSession();
+                
+            }, function(error) {
+                console.error('WebSocket connection error:', error);
+                isConnecting = false;
+                alert('Unable to connect to support. Please try again later.');
+                window.location.href = '/student/dashboard';
+            });
+        }
+
+        // Check for existing session
+        function checkExistingSession() {
+            fetch('/api/chat/status')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Chat status:', data);
+                    if (data.hasActiveSession) {
+                        currentSessionId = data.sessionId;
+                        if (data.status === 'waiting') {
+                            isInQueue = true;
+                            showWaitingRoom();
+                            updateQueuePosition(data.position, data.queueSize);
+                        } else if (data.status === 'active') {
+                            isInQueue = false;
+                            showChatInterface();
+                            updateAgentInfo(data.agentName, true);
+                            loadChatHistory(currentSessionId);
+                        }
+                    } else {
+                        // No existing session, auto-join queue
+                        setTimeout(startNewChat, 500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking session status:', error);
+                    // Auto-join queue on error
+                    setTimeout(startNewChat, 500);
+                });
+        }
+
+        // Load chat history
+        function loadChatHistory(sessionId) {
+            fetch(`/api/chat/session/${sessionId}/messages`)
+                .then(response => response.json())
+                .then(messages => {
+                    const messagesDiv = document.getElementById('chatMessages');
+                    messagesDiv.innerHTML = '';
+                    messages.forEach(msg => {
+                        const isOwn = msg.sender.username === currentUser.username;
+                        const msgType = isOwn ? 'sent' : 'received';
+                        
+                        // Check if it's an image message
+                        if (msg.content && msg.content.startsWith('data:image/')) {
+                            addImageToUI(msg.content, msgType, msg.sender.fullName, msg.sentAt);
+                        } else {
+                            addMessageToUI(msg.content, msgType, msg.sender.fullName, msg.sentAt);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading chat history:', error);
+                });
+        }
+
+        // Handle notifications
+        function handleNotification(data) {
+            switch(data.type) {
+                case 'QUEUE_POSITION':
+                    currentSessionId = data.sessionId;
+                    isInQueue = true;
+                    showWaitingRoom();
+                    updateQueuePosition(data.position, data.queueSize);
+                    break;
+                    
+                case 'AGENT_JOINED':
+                    isInQueue = false;
+                    showChatInterface();
+                    showSystemMessage('🎉 ' + data.agentName + ' has joined the chat!');
+                    updateAgentInfo(data.agentName, true);
+                    break;
+                    
+                case 'SESSION_INFO':
+                    currentSessionId = data.sessionId;
+                    if (data.status === 'active' && data.agentName) {
+                        isInQueue = false;
+                        showChatInterface();
+                        updateAgentInfo(data.agentName, true);
+                    }
+                    break;
+                    
+                case 'SESSION_ENDED':
+                    // Clear session data
+                    currentSessionId = null;
+                    isInQueue = false;
+                    
+                    // Show a brief message then redirect to dashboard
+                    alert('Chat session has ended. Returning to dashboard...');
+                    window.location.href = '/student/dashboard';
+                    break;
+                    
+                case 'ERROR':
+                    showSystemMessage('Error: ' + data.message);
+                    break;
+            }
+        }
+
+        // Handle incoming messages
+        function handleMessage(data) {
+            if (data.sessionId !== currentSessionId) {
+                console.log('Message for different session, ignoring');
+                return;
+            }
+            
+            const isOwn = data.senderUsername === currentUser.username;
+            if (!isOwn) {
+                // Check if it's an image message
+                if (data.content && data.content.startsWith('data:image/')) {
+                    addImageToUI(data.content, 'received', data.senderName, data.timestamp);
+                } else {
+                    addMessageToUI(data.content, 'received', data.senderName, data.timestamp);
+                }
+            }
+        }
+
+        // Show queue status
+        function updateQueuePosition(position, queueSize) {
+            document.getElementById('queuePosition').textContent = position;
+            document.getElementById('queueSize').textContent = queueSize;
+        }
+        
+        // Show waiting room
+        function showWaitingRoom() {
+            document.getElementById('waitingRoom').style.display = 'flex';
+            document.getElementById('chatInterface').style.display = 'none';
+            document.getElementById('chatEnded').style.display = 'none';
+        }
+        
+        // Show chat interface
+        function showChatInterface() {
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('chatInterface').style.display = 'flex';
+            document.getElementById('chatEnded').style.display = 'none';
+        }
+        
+        // Show chat ended
+        function showChatEnded() {
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('chatInterface').style.display = 'none';
+            document.getElementById('chatEnded').style.display = 'flex';
+        }
+        
+        // Cancel queue
+        function cancelQueue() {
+            if (confirm('Are you sure you want to leave the queue?')) {
+                if (currentSessionId && stompClient && stompClient.connected) {
+                    stompClient.send('/app/chat/end', {}, JSON.stringify({
+                        sessionId: currentSessionId,
+                        username: currentUser.username
+                    }));
+                }
+                window.location.href = '/student/dashboard';
+            }
+        }
+
+        // Update agent info in header
+        function updateAgentInfo(name, online) {
+            const agentNameElement = document.getElementById('agentName');
+            const agentStatus = document.getElementById('agentStatus');
+            
+            if (agentNameElement) {
+                agentNameElement.textContent = name;
+            }
+            
+            if (agentStatus) {
+                agentStatus.className = online ? 'status online' : 'status offline';
+                agentStatus.textContent = online ? '● Online' : '● Offline';
+            }
+            
+            // Store agent username and initialize voice call
+            if (online && name) {
+                // Extract username from display name (assuming format "Agent Name")
+                // In real scenario, you'd get this from the notification data
+                agentUsername = name.toLowerCase().replace(/\s+/g, '');
+                initializeVoiceCall();
+            }
+        }
+
+        // Start new chat
+        function startNewChat() {
+            if (isInQueue) {
+                alert('You are already in the queue. Please wait for an agent.');
+                return;
+            }
+            
+            if (currentSessionId) {
+                // End current session first
+                if (stompClient && stompClient.connected) {
+                    stompClient.send('/app/chat/end', {}, JSON.stringify({
+                        sessionId: currentSessionId,
+                        username: currentUser.username
+                    }));
+                }
+                currentSessionId = null;
+            }
+            
+            console.log('Starting new chat session...');
+            showWaitingRoom();
+            document.getElementById('queuePosition').textContent = '-';
+            document.getElementById('queueSize').textContent = '-';
+            
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/chat/start', {}, JSON.stringify({
+                    username: currentUser.username
+                }));
+            } else {
+                connect();
+                setTimeout(() => {
+                    if (stompClient && stompClient.connected) {
+                        stompClient.send('/app/chat/start', {}, JSON.stringify({
+                            username: currentUser.username
+                        }));
+                    }
+                }, 1000);
+            }
+        }
+
+        // Send message
+        function sendMessage(event) {
+            event.preventDefault();
+            
+            if (!currentSessionId) {
+                alert('Please start a chat session first.');
+                startNewChat();
+                return;
+            }
+            
+            if (isInQueue) {
+                alert('Please wait for an agent to join the chat.');
+                return;
+            }
+
+            // Check if there's an image to send
+            if (selectedImage) {
+                sendImageMessage();
+                return;
+            }
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            console.log('Sending message:', message);
+            
+            // Add message to UI immediately
+            addMessageToUI(message, 'sent', currentUser.name);
+            
+            // Send via WebSocket
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/chat/message', {}, JSON.stringify({
+                    sessionId: currentSessionId,
+                    senderUsername: currentUser.username,
+                    content: message
+                }));
+            } else {
+                showSystemMessage('Connection lost. Reconnecting...');
+                connect();
+            }
+            
+            // Clear input
+            input.value = '';
+        }
+
+        // End chat session
+        function endChatSession() {
+            if (!currentSessionId) {
+                alert('No active chat session to end.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to end this chat session?')) {
+                return;
+            }
+
+            console.log('Ending chat session:', currentSessionId);
+
+            if (stompClient && stompClient.connected) {
+                stompClient.send('/app/chat/end', {}, JSON.stringify({
+                    sessionId: currentSessionId,
+                    username: currentUser.username
+                }));
+                
+                // Reset state
+                currentSessionId = null;
+                isInQueue = false;
+                
+                // Redirect to dashboard
+                alert('Chat session ended. Returning to dashboard...');
+                window.location.href = '/student/dashboard';
+            } else {
+                showSystemMessage('Connection lost. Reconnecting...');
+                connect();
+            }
+        }
+
+        // Add message to UI
+        function addMessageToUI(text, type, senderName, timestamp) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : getCurrentTime();
+            
+            if (type === 'sent') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <p>${escapeHtml(text)}</p>
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <span class="material-icons">support_agent</span>
+                    </div>
+                    <div class="message-content">
+                        <strong>${escapeHtml(senderName || 'Support Agent')}</strong>
+                        <p>${escapeHtml(text)}</p>
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Show system message
+        function showSystemMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <span class="material-icons">info</span>
+                    <p>${escapeHtml(text)}</p>
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Image handling
+        let selectedImage = null;
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB.');
+                return;
+            }
+
+            selectedImage = file;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImagePreview() {
+            selectedImage = null;
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('imageInput').value = '';
+        }
+
+        function sendImageMessage() {
+            if (!selectedImage || !currentSessionId) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+
+                // Add image to UI immediately
+                addImageToUI(base64Image, 'sent', currentUser.name);
+
+                // Send via WebSocket
+                if (stompClient && stompClient.connected) {
+                    stompClient.send('/app/chat/message', {}, JSON.stringify({
+                        sessionId: currentSessionId,
+                        senderUsername: currentUser.username,
+                        content: base64Image,
+                        type: 'IMAGE'
+                    }));
+                }
+
+                // Clear image preview
+                removeImagePreview();
+            };
+            reader.readAsDataURL(selectedImage);
+        }
+
+        function addImageToUI(imageSrc, type, sender, timestamp) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : getCurrentTime();
+
+            if (type === 'sent') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <img src="${imageSrc}" class="message-image" onclick="window.open('${imageSrc}', '_blank')" alt="Sent image">
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <span class="material-icons">support_agent</span>
+                    </div>
+                    <div class="message-content">
+                        <strong>${escapeHtml(sender)}</strong>
+                        <img src="${imageSrc}" class="message-image" onclick="window.open('${imageSrc}', '_blank')" alt="Received image">
+                        <span class="message-time">${time}</span>
+                    </div>
+                `;
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Chat initialized for user:', currentUser.name);
+            connect();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (stompClient && stompClient.connected) {
+                stompClient.disconnect();
+            }
+            if (voiceCallManager) {
+                voiceCallManager.cleanup();
+            }
+        });
+        
+        // ==================== VOICE CALL FUNCTIONS ====================
+        
+        /**
+         * Initialize voice call when chat is connected
+         */
+        function initializeVoiceCall() {
+            if (!agentUsername) {
+                console.warn('No agent connected yet');
+                return;
+            }
+            
+            voiceCallManager = new VoiceCallManager(stompClient, currentUser.username, agentUsername);
+            
+            // Setup callbacks
+            voiceCallManager.onCallStateChange = function(state) {
+                updateCallUI(state);
+            };
+            
+            voiceCallManager.onCallDuration = function(seconds) {
+                document.getElementById('callDuration').textContent = VoiceCallManager.formatDuration(seconds);
+            };
+            
+            voiceCallManager.onError = function(message) {
+                alert(message);
+                resetCallUI();
+            };
+            
+            // Show call button
+            document.getElementById('callButton').style.display = 'inline-block';
+        }
+        
+        /**
+         * Initiate voice call
+         */
+        async function initiateVoiceCall() {
+            console.log('📞 Initiating voice call...');
+            
+            if (!voiceCallManager) {
+                initializeVoiceCall();
+            }
+            
+            const started = await voiceCallManager.startCall();
+            if (started) {
+                updateCallUI('calling');
+            }
+        }
+        
+        /**
+         * End voice call
+         */
+        function endVoiceCall() {
+            console.log('📴 Ending voice call...');
+            if (voiceCallManager) {
+                voiceCallManager.endCall();
+            }
+            resetCallUI();
+        }
+        
+        /**
+         * Toggle mute
+         */
+        function toggleMute() {
+            if (!voiceCallManager) return;
+            
+            const muted = voiceCallManager.toggleMute();
+            const muteButton = document.getElementById('muteButton');
+            const icon = muteButton.querySelector('.material-icons');
+            
+            if (muted) {
+                icon.textContent = 'mic_off';
+                muteButton.style.background = '#f44336';
+                muteButton.title = 'Unmute';
+            } else {
+                icon.textContent = 'mic';
+                muteButton.style.background = 'rgba(255,255,255,0.2)';
+                muteButton.title = 'Mute';
+            }
+        }
+        
+        /**
+         * Update call UI based on state
+         */
+        function updateCallUI(state) {
+            const callButton = document.getElementById('callButton');
+            const callControls = document.getElementById('callControls');
+            const callStatus = document.getElementById('callStatus');
+            const callStatusText = document.getElementById('callStatusText');
+            const callStatusIcon = document.querySelector('.call-status-icon');
+            
+            switch(state) {
+                case 'calling':
+                    callButton.style.display = 'none';
+                    callStatus.style.display = 'flex';
+                    callStatusText.textContent = 'Calling...';
+                    callStatusIcon.textContent = 'phone_in_talk';
+                    callStatus.style.background = '#2196F3';
+                    isCallActive = true;
+                    break;
+                    
+                case 'connecting':
+                    callStatusText.textContent = 'Connecting...';
+                    callStatusIcon.textContent = 'sync';
+                    break;
+                    
+                case 'connected':
+                    callStatus.style.display = 'none';
+                    callControls.style.display = 'flex';
+                    isCallActive = true;
+                    // Add system message to chat
+                    addSystemMessage('Voice call connected');
+                    break;
+                    
+                case 'ended':
+                    resetCallUI();
+                    addSystemMessage('Voice call ended');
+                    break;
+                    
+                case 'rejected':
+                    resetCallUI();
+                    addSystemMessage('Call was declined');
+                    break;
+            }
+        }
+        
+        /**
+         * Reset call UI to initial state
+         */
+        function resetCallUI() {
+            document.getElementById('callButton').style.display = agentUsername ? 'inline-block' : 'none';
+            document.getElementById('callControls').style.display = 'none';
+            document.getElementById('callStatus').style.display = 'none';
+            document.getElementById('callDuration').textContent = '00:00';
+            
+            // Reset mute button
+            const muteButton = document.getElementById('muteButton');
+            const icon = muteButton.querySelector('.material-icons');
+            icon.textContent = 'mic';
+            muteButton.style.background = 'rgba(255,255,255,0.2)';
+            muteButton.title = 'Mute';
+            
+            isCallActive = false;
+        }
+        
+        /**
+         * Handle incoming call signals
+         */
+        function handleCallSignal(data) {
+            console.log('📞 Call signal type:', data.type);
+            
+            if (!voiceCallManager) {
+                initializeVoiceCall();
+            }
+            
+            switch(data.type) {
+                case 'CALL_ACCEPT':
+                    console.log('✅ Call accepted by agent');
+                    updateCallUI('connecting');
+                    break;
+                    
+                case 'CALL_REJECT':
+                    console.log('❌ Call rejected by agent');
+                    updateCallUI('rejected');
+                    if (voiceCallManager) {
+                        voiceCallManager.cleanup();
+                    }
+                    break;
+                    
+                case 'CALL_END':
+                    console.log('📴 Call ended by agent');
+                    if (voiceCallManager) {
+                        voiceCallManager.cleanup();
+                    }
+                    updateCallUI('ended');
+                    break;
+                    
+                case 'WEBRTC_OFFER':
+                    console.log('🎯 Received WebRTC offer');
+                    voiceCallManager.handleOffer(data.sdp);
+                    break;
+                    
+                case 'WEBRTC_ANSWER':
+                    console.log('🎯 Received WebRTC answer');
+                    voiceCallManager.handleAnswer(data.sdp);
+                    break;
+                    
+                case 'ICE_CANDIDATE':
+                    console.log('🧊 Received ICE candidate');
+                    voiceCallManager.handleICECandidate(data.candidate);
+                    break;
+            }
+        }
+        
+        /**
+         * Add system message to chat
+         */
+        function addSystemMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <span class="material-icons">info</span>
+                    <p>${text}</p>
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>

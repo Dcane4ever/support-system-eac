@@ -1,0 +1,124 @@
+/* Dashboard Styles - Shared by Student and Teacher Dashboards */
+:root {
+    --eac-red: #cc0000;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Google Sans', Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.header {
+    background: var(--eac-red);
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-menu a, 
+.nav-menu form {
+    display: inline-block;
+}
+
+.btn-logout {
+    background: white;
+    color: var(--eac-red);
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-family: 'Google Sans', Arial, sans-serif;
+    transition: all 0.3s;
+}
+
+.btn-logout:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.welcome-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.welcome-card h2 {
+    color: var(--eac-red);
+    margin-bottom: 0.5rem;
+}
+
+.welcome-card p {
+    color: #333;
+    margin: 0.5rem 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-top: 4px solid var(--eac-red);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.card-icon {
+    font-size: 48px;
+    color: var(--eac-red);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.card h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.card p {
+    color: #666;
+    line-height: 1.5;
+}

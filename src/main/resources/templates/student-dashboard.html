@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - EAC Classroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>🎓 Student Dashboard</h1>
+        <div class="nav-menu">
+            <span th:text="'Welcome, ' + ${user.fullName}">Welcome, Student</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome-card">
+            <h2>Welcome to Your Dashboard</h2>
+            <p>Hello <strong th:text="${user.fullName}">Student</strong>! Student ID: <strong th:text="${user.studentId}">N/A</strong></p>
+            <p>Email: <strong th:text="${user.email}">email@eac.edu.ph</strong></p>
+        </div>
+        
+        <div class="dashboard-grid">
+            <a href="/student/classes" class="card">
+                <div class="material-icons card-icon">class</div>
+                <h3>My Classes</h3>
+                <p>View and manage your enrolled classes</p>
+            </a>
+            
+            <a href="/student/assignments" class="card">
+                <div class="material-icons card-icon">assignment</div>
+                <h3>Assignments</h3>
+                <p>Check your assignments and deadlines</p>
+            </a>
+            
+            <a href="/student/grades" class="card">
+                <div class="material-icons card-icon">grade</div>
+                <h3>Grades</h3>
+                <p>View your grades and academic progress</p>
+            </a>
+            
+            <a href="/student/chat" class="card">
+                <div class="material-icons card-icon">chat</div>
+                <h3>Support Chat</h3>
+                <p>Get help from teachers and support agents</p>
+            </a>
+            
+            <a href="/student/calendar" class="card">
+                <div class="material-icons card-icon">event</div>
+                <h3>Calendar</h3>
+                <p>View your schedule and important dates</p>
+            </a>
+            
+            <a href="/student/settings" class="card">
+                <div class="material-icons card-icon">settings</div>
+                <h3>Settings</h3>
+                <p>Manage your account settings and preferences</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+

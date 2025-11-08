@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Agent Dashboard - EAC Classroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>🎧 Support Agent Dashboard</h1>
+        <div class="nav-menu">
+            <span th:text="'Welcome, ' + ${user.fullName}">Welcome, Agent</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome-card">
+            <h2>Support Agent Control Panel</h2>
+            <p>Hello <strong th:text="${user.fullName}">Agent</strong>!</p>
+            <p>Email: <strong th:text="${user.email}">agent@eac.edu.ph</strong></p>
+            <p class="status-badge">● Available for Support</p>
+        </div>
+        
+        <div class="dashboard-grid">
+            <a href="/support/chat" class="card">
+                <div class="material-icons card-icon">forum</div>
+                <h3>Active Chats</h3>
+                <p>View and respond to student chat requests</p>
+            </a>
+            
+            <a href="/support/queue" class="card">
+                <div class="material-icons card-icon">queue</div>
+                <h3>Support Queue</h3>
+                <p>Manage pending support tickets</p>
+            </a>
+            
+            <a href="/support/history" class="card">
+                <div class="material-icons card-icon">history</div>
+                <h3>Chat History</h3>
+                <p>View past conversations and resolved issues</p>
+            </a>
+            
+            <a href="/support/knowledge-base" class="card">
+                <div class="material-icons card-icon">library_books</div>
+                <h3>Knowledge Base</h3>
+                <p>Access help articles and common solutions</p>
+            </a>
+            
+            <a href="/support/reports" class="card">
+                <div class="material-icons card-icon">assessment</div>
+                <h3>Reports</h3>
+                <p>View support metrics and performance</p>
+            </a>
+            
+            <a href="/support/settings" class="card">
+                <div class="material-icons card-icon">settings</div>
+                <h3>Settings</h3>
+                <p>Configure availability and preferences</p>
+            </a>
+        </div>
+    </div>
+
+    <style>
+        .status-badge {
+            display: inline-block;
+            color: #4caf50;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+    </style>
+</body>
+</html>

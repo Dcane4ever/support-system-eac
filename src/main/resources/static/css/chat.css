@@ -69,10 +69,12 @@ body {
 
     .chat-main {
         flex: 1;
+        max-height: calc(100vh - 60px); /* Account for header */
     }
 
     .chat-messages {
         padding: 1rem;
+        max-height: calc(100vh - 280px); /* Tighter constraint for mobile */
     }
 
     .message-content {
@@ -115,6 +117,7 @@ body {
 
     .chat-messages {
         padding: 0.5rem;
+        max-height: calc(100vh - 260px); /* Even tighter for small phones */
     }
 
     .message-content {
@@ -468,6 +471,8 @@ ight: 40px;
     background: white;
     min-height: 0; /* Critical: allows flex children to shrink */
     overflow: hidden; /* Prevent main container overflow */
+    max-height: 100vh; /* Constrain to viewport height */
+    position: relative; /* Establish positioning context */
 }
 
 .chat-header {
@@ -510,6 +515,8 @@ ight: 40px;
     padding: 2rem;
     background: #f9f9f9;
     min-height: 0; /* Critical: allows container to shrink and scroll */
+    max-height: calc(100vh - 200px); /* Prevent messages from growing beyond viewport */
+    height: 100%; /* Force container to use available space */
 }
 
 .message {
@@ -595,6 +602,9 @@ ight: 40px;
     background: white;
     border-top: 1px solid #e0e0e0;
     flex-shrink: 0; /* Prevent input container from shrinking */
+    position: sticky; /* Keep input at bottom */
+    bottom: 0; /* Stick to bottom */
+    z-index: 10; /* Stay above messages */
 }
 
 .chat-input-form {

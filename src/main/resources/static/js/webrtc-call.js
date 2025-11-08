@@ -12,30 +12,33 @@ class VoiceCallManager {
         // WebRTC configuration with STUN and TURN servers
         this.configuration = {
             iceServers: [
-                // Google's free STUN servers
+                // Metered STUN server
+                {
+                    urls: 'stun:stun.relay.metered.ca:80'
+                },
+                // Google's free STUN servers (backup)
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                // Twilio STUN servers
-                { urls: 'stun:global.stun.twilio.com:3478' },
-                // Metered TURN servers (better reliability)
+                // Metered TURN servers (your account - 50GB/month free)
                 {
-                    urls: [
-                        'turn:a.relay.metered.ca:80',
-                        'turn:a.relay.metered.ca:80?transport=tcp',
-                        'turn:a.relay.metered.ca:443',
-                        'turn:a.relay.metered.ca:443?transport=tcp'
-                    ],
-                    username: 'e92f577c4bc6068b0f7b6ecb',
-                    credential: 'pxNqW1Ks1uW+iwmr'
+                    urls: 'turn:standard.relay.metered.ca:80',
+                    username: 'dc4b41402c0d0529f4a4a1a4',
+                    credential: 'lVs8NVqwrnrdwt9p'
                 },
-                // Backup TURN server (OpenRelay)
                 {
-                    urls: [
-                        'turn:openrelay.metered.ca:80',
-                        'turn:openrelay.metered.ca:443'
-                    ],
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'turn:standard.relay.metered.ca:80?transport=tcp',
+                    username: 'dc4b41402c0d0529f4a4a1a4',
+                    credential: 'lVs8NVqwrnrdwt9p'
+                },
+                {
+                    urls: 'turn:standard.relay.metered.ca:443',
+                    username: 'dc4b41402c0d0529f4a4a1a4',
+                    credential: 'lVs8NVqwrnrdwt9p'
+                },
+                {
+                    urls: 'turns:standard.relay.metered.ca:443?transport=tcp',
+                    username: 'dc4b41402c0d0529f4a4a1a4',
+                    credential: 'lVs8NVqwrnrdwt9p'
                 }
             ],
             iceCandidatePoolSize: 10,

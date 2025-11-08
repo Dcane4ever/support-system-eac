@@ -239,6 +239,19 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Fix for support card buttons - make them visible on white background */
+.support-card .btn-primary {
+    background-color: var(--eac-red);
+    color: white;
+    border: 2px solid var(--eac-red);
+}
+
+.support-card .btn-primary:hover {
+    background-color: #990000;
+    border-color: #990000;
+    color: white;
+}
+
 .chat-widget {
     position: fixed;
     bottom: 20px;

@@ -227,6 +227,18 @@ body {
     margin-bottom: 1rem;
 }
 
+.support-card h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.support-card p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
 .chat-widget {
     position: fixed;
     bottom: 20px;
@@ -274,4 +286,140 @@ footer p {
     padding: 8px 16px;
     border-radius: 20px;
     font-weight: 500;
+}
+
+/* ==================== MOBILE RESPONSIVE STYLES ==================== */
+
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .header h1 {
+        font-size: 18px;
+    }
+
+    .eac-logo {
+        height: 40px;
+    }
+
+    .nav-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .nav-menu a {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .hero {
+        padding: 2rem 1rem;
+    }
+
+    .hero h2 {
+        font-size: 1.8rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .feature-card {
+        padding: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .support-section {
+        padding: 2rem 1rem;
+    }
+
+    .support-options {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .chat-widget {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .chat-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-large {
+        padding: 10px 24px;
+        font-size: 1rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+        padding: 0 1rem;
+    }
+
+    .hero-buttons .btn-large {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 16px;
+    }
+
+    .hero h2 {
+        font-size: 1.5rem;
+    }
+
+    .hero p {
+        font-size: 0.9rem;
+    }
+
+    .feature-card {
+        padding: 1rem;
+    }
+
+    .feature-icon {
+        font-size: 36px;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+    }
+
+    .support-card {
+        padding: 1.5rem;
+    }
+
+    .support-card .material-icons {
+        font-size: 36px;
+    }
+
+    .chat-button {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-primary {
+        padding: 6px 16px;
+        font-size: 0.9rem;
+    }
 }

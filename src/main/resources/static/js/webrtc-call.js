@@ -9,7 +9,7 @@ class VoiceCallManager {
         this.currentUsername = currentUsername;
         this.remoteUsername = remoteUsername;
         
-        // WebRTC configuration with STUN and TURN servers
+        // WebRTC configuration - TURN credentials loaded dynamically
         this.configuration = {
             iceServers: [
                 // Metered STUN server
@@ -18,37 +18,21 @@ class VoiceCallManager {
                 },
                 // Google's free STUN servers (backup)
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                // Metered TURN servers (your account - 50GB/month free)
-                {
-                    urls: 'turn:standard.relay.metered.ca:80',
-                    username: 'dc4b41402c0d0529f4a4a1a4',
-                    credential: 'lVs8NVqwrnrdwt9p'
-                },
-                {
-                    urls: 'turn:standard.relay.metered.ca:80?transport=tcp',
-                    username: 'dc4b41402c0d0529f4a4a1a4',
-                    credential: 'lVs8NVqwrnrdwt9p'
-                },
-                {
-                    urls: 'turn:standard.relay.metered.ca:443',
-                    username: 'dc4b41402c0d0529f4a4a1a4',
-                    credential: 'lVs8NVqwrnrdwt9p'
-                },
-                {
-                    urls: 'turns:standard.relay.metered.ca:443?transport=tcp',
-                    username: 'dc4b41402c0d0529f4a4a1a4',
-                    credential: 'lVs8NVqwrnrdwt9p'
-                }
+                { urls: 'stun:stun1.l.google.com:19302' }
+                // TURN servers will be added after fetching credentials
             ],
             iceCandidatePoolSize: 10,
-            iceTransportPolicy: 'all', // Use 'relay' to force TURN for testing
+            iceTransportPolicy: 'all',
             bundlePolicy: 'max-bundle',
             rtcpMuxPolicy: 'require'
         };
         
         this.peerConnection = null;
         this.localStream = null;
+        this.turnCredentialsLoaded = false;
+        
+        // Load TURN credentials on initialization
+        this.loadTurnCredentials();
         this.remoteStream = null;
         
         this.callId = null;
@@ -67,6 +51,46 @@ class VoiceCallManager {
         this.onCallStateChange = null;
         this.onCallDuration = null;
         this.onError = null;
+    }
+    
+    /**
+     * Load TURN credentials from backend (secure)
+     */
+    async loadTurnCredentials() {
+        try {
+            const response = await fetch('/api/turn-config');
+            const config = await response.json();
+            
+            // Add TURN servers with fetched credentials
+            this.configuration.iceServers.push(
+                {
+                    urls: 'turn:standard.relay.metered.ca:80',
+                    username: config.username,
+                    credential: config.credential
+                },
+                {
+                    urls: 'turn:standard.relay.metered.ca:80?transport=tcp',
+                    username: config.username,
+                    credential: config.credential
+                },
+                {
+                    urls: 'turn:standard.relay.metered.ca:443',
+                    username: config.username,
+                    credential: config.credential
+                },
+                {
+                    urls: 'turns:standard.relay.metered.ca:443?transport=tcp',
+                    username: config.username,
+                    credential: config.credential
+                }
+            );
+            
+            this.turnCredentialsLoaded = true;
+            console.log('✅ TURN credentials loaded securely');
+        } catch (error) {
+            console.error('❌ Failed to load TURN credentials:', error);
+            // Continue with STUN only if TURN fails
+        }
     }
     
     /**
@@ -298,6 +322,16 @@ class VoiceCallManager {
             
             if (this.peerConnection.iceGatheringState === 'complete') {
                 console.log('✅ All ICE candidates have been gathered');
+                console.log('⏱️ Waiting for ICE connection to establish...');
+                
+                // Set a timeout to detect stuck connections
+                setTimeout(() => {
+                    if (this.peerConnection && this.peerConnection.iceConnectionState !== 'connected' && this.peerConnection.iceConnectionState !== 'completed') {
+                        console.warn('⚠️ ICE connection taking too long! Current state:', this.peerConnection.iceConnectionState);
+                        console.warn('🔍 Checking connection details...');
+                        this.debugConnectionState();
+                    }
+                }, 10000); // 10 seconds timeout
             }
         };
         
@@ -430,7 +464,11 @@ class VoiceCallManager {
      */
     async handleICECandidate(candidate) {
         try {
-            console.log('🧊 Received ICE candidate');
+            // Log the type of candidate being received
+            const candidateType = candidate.candidate.includes('typ relay') ? 'TURN relay' :
+                                candidate.candidate.includes('typ srflx') ? 'STUN reflexive' :
+                                candidate.candidate.includes('typ host') ? 'Host' : 'Unknown';
+            console.log(`🧊 Received ICE candidate [${candidateType}]`);
             
             if (!this.peerConnection) {
                 console.warn('⏳ Peer connection not ready yet, queuing ICE candidate...');
@@ -446,7 +484,7 @@ class VoiceCallManager {
             }
             
             await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log('✅ ICE candidate added successfully');
+            console.log(`✅ ICE candidate added successfully [${candidateType}]`);
         } catch (error) {
             console.error('❌ Error adding ICE candidate:', error);
         }
@@ -512,6 +550,60 @@ class VoiceCallManager {
             });
         } catch (error) {
             console.error('❌ Error getting stats:', error);
+        }
+    }
+    
+    /**
+     * Debug connection state when stuck
+     */
+    async debugConnectionState() {
+        if (!this.peerConnection) {
+            console.error('❌ No peer connection to debug');
+            return;
+        }
+        
+        console.log('🔍 === CONNECTION DEBUG INFO ===');
+        console.log('ICE Connection State:', this.peerConnection.iceConnectionState);
+        console.log('Connection State:', this.peerConnection.connectionState);
+        console.log('Signaling State:', this.peerConnection.signalingState);
+        console.log('ICE Gathering State:', this.peerConnection.iceGatheringState);
+        
+        try {
+            const stats = await this.peerConnection.getStats();
+            let candidatePairs = [];
+            let localCandidates = [];
+            let remoteCandidates = [];
+            
+            stats.forEach(report => {
+                if (report.type === 'candidate-pair') {
+                    candidatePairs.push({
+                        state: report.state,
+                        nominated: report.nominated,
+                        priority: report.priority
+                    });
+                }
+                if (report.type === 'local-candidate') {
+                    localCandidates.push({
+                        type: report.candidateType,
+                        protocol: report.protocol,
+                        address: report.address || report.ip
+                    });
+                }
+                if (report.type === 'remote-candidate') {
+                    remoteCandidates.push({
+                        type: report.candidateType,
+                        protocol: report.protocol,
+                        address: report.address || report.ip
+                    });
+                }
+            });
+            
+            console.log('📊 Candidate Pairs:', candidatePairs);
+            console.log('📤 Local Candidates:', localCandidates);
+            console.log('📥 Remote Candidates:', remoteCandidates);
+            console.log('🔍 === END DEBUG INFO ===');
+        } catch (error) {
+            console.error('❌ Error getting debug stats:', error);
         }
     }
     

@@ -30,9 +30,6 @@ class VoiceCallManager {
         this.peerConnection = null;
         this.localStream = null;
         this.turnCredentialsLoaded = false;
-        
-        // Load TURN credentials on initialization
-        this.loadTurnCredentials();
         this.remoteStream = null;
         
         this.callId = null;
@@ -115,6 +112,12 @@ class VoiceCallManager {
      */
     async startCall() {
         try {
+            // Wait for TURN credentials to load first
+            if (!this.turnCredentialsLoaded) {
+                console.log('⏳ Waiting for TURN credentials to load...');
+                await this.loadTurnCredentials();
+            }
+            
             // Generate call ID
             this.callId = 'call_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             console.log('📞 Starting call with ID:', this.callId);
@@ -178,6 +181,12 @@ class VoiceCallManager {
      */
     async acceptCall(callId) {
         try {
+            // Wait for TURN credentials to load first
+            if (!this.turnCredentialsLoaded) {
+                console.log('⏳ Waiting for TURN credentials to load...');
+                await this.loadTurnCredentials();
+            }
+            
             this.callId = callId;
             console.log('✅ Accepting call:', callId);
             

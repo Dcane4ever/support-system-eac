@@ -12,17 +12,18 @@ import java.util.Map;
 @RequestMapping("/api")
 public class TurnConfigController {
     
-    @Value("${turn.username:default_user}")
-    private String turnUsername;
+    @Value("${metered.api.key:}")
+    private String meteredApiKey;
     
-    @Value("${turn.credential:default_pass}")
-    private String turnCredential;
-    
+    /**
+     * Get Metered API configuration for fetching TURN credentials dynamically
+     * @return Map containing API key and endpoint URL
+     */
     @GetMapping("/turn-config")
     public Map<String, Object> getTurnConfig() {
         Map<String, Object> config = new HashMap<>();
-        config.put("username", turnUsername);
-        config.put("credential", turnCredential);
+        config.put("apiKey", meteredApiKey);
+        config.put("endpoint", "https://support-system-eac.metered.live/api/v1/turn/credentials");
         return config;
     }
 }

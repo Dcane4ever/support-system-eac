@@ -54,42 +54,31 @@ class VoiceCallManager {
     }
     
     /**
-     * Load TURN credentials from backend (secure)
+     * Load TURN credentials from Metered API (secure and dynamic)
      */
     async loadTurnCredentials() {
         try {
-            const response = await fetch('/api/turn-config');
-            const config = await response.json();
+            // Get API key from backend
+            const configResponse = await fetch('/api/turn-config');
+            const config = await configResponse.json();
             
-            // Add TURN servers with fetched credentials
-            this.configuration.iceServers.push(
-                {
-                    urls: 'turn:standard.relay.metered.ca:80',
-                    username: config.username,
-                    credential: config.credential
-                },
-                {
-                    urls: 'turn:standard.relay.metered.ca:80?transport=tcp',
-                    username: config.username,
-                    credential: config.credential
-                },
-                {
-                    urls: 'turn:standard.relay.metered.ca:443',
-                    username: config.username,
-                    credential: config.credential
-                },
-                {
-                    urls: 'turns:standard.relay.metered.ca:443?transport=tcp',
-                    username: config.username,
-                    credential: config.credential
-                }
-            );
+            // Fetch fresh TURN credentials from Metered API
+            const turnResponse = await fetch(`${config.endpoint}?apiKey=${config.apiKey}`);
+            const iceServers = await turnResponse.json();
+            
+            // Add all ICE servers from Metered API
+            this.configuration.iceServers = iceServers;
             
             this.turnCredentialsLoaded = true;
-            console.log('✅ TURN credentials loaded securely');
+            console.log('✅ TURN credentials loaded from Metered API:', iceServers.length, 'servers');
         } catch (error) {
-            console.error('❌ Failed to load TURN credentials:', error);
-            // Continue with STUN only if TURN fails
+            console.error('❌ Failed to load TURN credentials from Metered:', error);
+            // Fallback: Add basic STUN server if API fails
+            this.configuration.iceServers = [
+                { urls: 'stun:stun.relay.metered.ca:80' },
+                { urls: 'stun:stun.l.google.com:19302' }
+            ];
+            console.log('⚠️ Using fallback STUN servers only');
         }
     }
     
